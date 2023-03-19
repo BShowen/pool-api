@@ -6,15 +6,10 @@ const Schema = mongoose.Schema;
 const { roles } = require("../helpers");
 
 function toLowerCase(value) {
-  return value.toLowerCase();
+  return value.trim().toLowerCase();
 }
 
 const companySchema = new Schema({
-  // owner: {
-  //   type: mongoose.Types.ObjectId,
-  //   ref: "User",
-  //   required: [true, "Company owner is required."],
-  // },
   owner: {
     firstName: {
       type: String,
@@ -72,8 +67,7 @@ const companySchema = new Schema({
     set: toLowerCase,
   },
   accounts: [
-    {
-      //<CustomerAccount>
+    new Schema({
       accountName: {
         type: String,
         required: [true, "Account name is required."],
@@ -170,7 +164,7 @@ const companySchema = new Schema({
           notes: String,
         },
       ],
-    },
+    }),
   ],
 });
 

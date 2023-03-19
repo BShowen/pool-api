@@ -5,8 +5,8 @@ module.exports = function authorizeRoles(roles = []) {
 
   return [
     (req, res, next) => {
-      const { user } = req;
-      const hasRole = roles.some((role) => user.roles.includes(role));
+      const { token } = req;
+      const hasRole = roles.some((role) => token?.roles?.includes(role));
       if (hasRole) {
         next();
       } else {

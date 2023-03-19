@@ -6,12 +6,17 @@ const jwt = require("jsonwebtoken");
 
 module.exports = async function authenticateJWT(req, res, next) {
   const unverifiedToken = req.get("authorization") || "";
-  jwt.verify(unverifiedToken, process.env.JWT_SECRET, (err, decodedToken) => {
-    if (err) {
-      res.sendStatus(401);
-    } else {
-      req.user = decodedToken;
-      next();
+  jwt.verify(
+    unverifiedToken,
+    process.env.JWT_SECRET,
+    { maxAge: process.env.JWT_MAX_AGE },
+    (err, decodedToken) => {
+      if (err) {
+        res.sendStatus(401);
+      } else {
+        req.token = decodedToken;
+        next();
+      }
     }
-  });
+  );
 };

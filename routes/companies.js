@@ -2,10 +2,18 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
 
 // local modules
-const { Company } = require("../models");
-const { apiResponse, formatMongooseErrors, signJwt } = require("../helpers");
+const { Company, CustomerAccount } = require("../models");
+const {
+  apiResponse,
+  formatMongooseErrors,
+  signJwt,
+  verifyJwt,
+  authorizeRoles,
+  roles,
+} = require("../helpers");
 
 router.post("/signup", [
   async (req, res, next) => {
@@ -50,9 +58,9 @@ router.post("/signup", [
     try {
       const savedCompany = await new Company(req.body).save();
       const apiToken = signJwt(
-        { c_id: savedCompany._id },
+        { c_id: savedCompany._id, roles: savedCompany.owner.roles },
         {
-          expiresIn: "7d",
+          expiresIn: process.env.JWT_MAX_AGE,
         }
       );
       res.status(200).json(apiResponse(false, { apiToken }));
@@ -101,7 +109,10 @@ router.post("/login", [
       bcrypt.compareSync(password, company.owner.password)
     ) {
       // Return 200 status with api key if matched
-      const apiToken = signJwt({ c_id: company._id }, { expiresIn: "7d" });
+      const apiToken = signJwt(
+        { c_id: company._id, roles: company.owner.roles },
+        { expiresIn: process.env.JWT_MAX_AGE }
+      );
       res.status(200).json(apiResponse(false, apiToken));
     } else {
       // Return 401 status with error message if not matched.
@@ -111,10 +122,28 @@ router.post("/login", [
   },
 ]);
 
-router.post("/newAccount", [
-  // Authorize for "MANAGER" role and higher.
-  // verify jwt.
-  // instantiate user with roles set to ""
+router.post("/new-account", [
+  verifyJwt,
+  authorizeRoles(roles.MANAGER),
+  async (req, res) => {
+    try {
+      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
+      const company = await Company.findById(companyId);
+      company.accounts.push(company.accounts.create(req.body));
+      await company.save();
+      return res
+        .status(200)
+        .json(
+          apiResponse(false, {
+            message: "Successfully created a new customer account.",
+          })
+        );
+    } catch (err) {
+      console.log(err);
+      const errorList = formatMongooseErrors(err);
+      return res.status(400).json(apiResponse(errorList));
+    }
+  },
 ]);
 
 module.exports = router;
