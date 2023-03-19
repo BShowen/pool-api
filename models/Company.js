@@ -2,8 +2,12 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-// Local modules
-const { preSaveFormatter, roles } = require("../helpers");
+// local modules
+const { roles } = require("../helpers");
+
+function toLowerCase(value) {
+  return value.toLowerCase();
+}
 
 const companySchema = new Schema({
   // owner: {
@@ -15,10 +19,12 @@ const companySchema = new Schema({
     firstName: {
       type: String,
       required: [true, "First name is required."],
+      set: toLowerCase,
     },
     lastName: {
       type: String,
       required: [true, "Last name is required."],
+      set: toLowerCase,
     },
     password: {
       type: String,
@@ -36,12 +42,14 @@ const companySchema = new Schema({
       enum: {
         values: roles.all,
         message: "{VALUE} is not a supported role.",
+        set: toLowerCase,
       },
     },
   },
   name: {
     type: String,
     required: [true, "Company name is required."],
+    set: toLowerCase,
   },
   email: {
     type: String,
@@ -52,49 +60,69 @@ const companySchema = new Schema({
       message: (props) => `${props.value} is not a valid email.`,
     },
     required: [true, "Email is required."],
+    set: toLowerCase,
   },
   phoneNumber: {
     type: String,
     required: [true, "Phone number is required."],
   },
-  address: { type: String, required: [true, "Company address is required."] },
+  address: {
+    type: String,
+    required: [true, "Company address is required."],
+    set: toLowerCase,
+  },
   accounts: [
     {
       //<CustomerAccount>
       accountName: {
         type: String,
         required: [true, "Account name is required."],
+        set: toLowerCase,
       },
-      accountOwners: [
-        {
-          // <Customer>
-          firstName: {
-            type: String,
-            required: [true, "Customer first name is required."],
-          },
-          lastName: {
-            type: String,
-            required: [true, "Customer last name is required."],
-          },
-          emailAddress: {
-            type: String,
-            validate: {
-              validator: function (v) {
-                return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
-              },
-              message: (props) => `${props.value} is not a valid email.`,
+      accountOwners: {
+        type: [
+          {
+            // <Customer>
+            firstName: {
+              type: String,
+              required: [true, "Customer first name is required."],
+              set: toLowerCase,
             },
-            required: [true, "Customer email is required."],
+            lastName: {
+              type: String,
+              required: [true, "Customer last name is required."],
+              set: toLowerCase,
+            },
+            emailAddress: {
+              type: String,
+              validate: {
+                validator: function (v) {
+                  return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(
+                    v
+                  );
+                },
+                message: (props) => `${props.value} is not a valid email.`,
+              },
+              required: [true, "Customer email is required."],
+              set: toLowerCase,
+            },
+            phoneNumber: {
+              type: String,
+              required: [true, "Customer phone number is required."],
+            },
           },
-          phoneNumber: {
-            type: String,
-            required: [true, "Customer phone number is required."],
+        ],
+        validate: {
+          validator: function (value) {
+            return !(value.length == 0);
           },
+          message: "At least one account owner is required.",
         },
-      ],
+      },
       address: {
         type: String,
-        required: [true, "Customer address is required."],
+        required: [true, "Account address is required."],
+        set: toLowerCase,
       },
       pool: {
         // <SwimmingPool>
@@ -144,10 +172,6 @@ const companySchema = new Schema({
       ],
     },
   ],
-});
-
-companySchema.pre("validate", function () {
-  preSaveFormatter(this._doc);
 });
 
 module.exports = mongoose.model("Company", companySchema);
