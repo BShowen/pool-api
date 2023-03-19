@@ -1,0 +1,26 @@
+{
+  "name": "pool-api",
+  "version": "1.0.0",
+  "description": "Backend for the pool app",
+  "main": "index.js",
+  "scripts": {
+    "devStart": "nodemon ./bin/www",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bradley Showen",
+  "license": "ISC",
+  "nodemonConfig": {
+    "ext": "js json"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "dotenv": "^16.0.3",
+    "express": "~4.16.1",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.0.1",
+    "morgan": "~1.9.1",
+    "nodemon": "^2.0.21"
+  }
+}
