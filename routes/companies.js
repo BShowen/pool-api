@@ -168,8 +168,61 @@ router.get(
 router.post("/new-technician", [
   verifyJwt,
   authorizeRoles(roles.MANAGER),
-  (req, res) => {
-    res.status(200).json(apiResponse({ message: "Success." }));
+  async (req, res, next) => {
+    /**
+     * Hash the password, if it was provided.
+     * If no password was provided then this middleware gets skipped and
+     * mongoose validation will handle the missing password.
+     */
+    if (!req.body.password) return next();
+
+    try {
+      req.body.password = await bcrypt.hash(req.body.password, 10);
+      next();
+    } catch (err) {
+      return res.status(500).json(
+        apiResponse({
+          errors: [{ message: "Error hashing password" }],
+        })
+      );
+    }
+  },
+  async (req, res) => {
+    try {
+      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
+      const company = await Company.findById(companyId);
+      company.technicians.push(company.technicians.create(req.body));
+      await company.save();
+      return res.status(200).json(
+        apiResponse({
+          message: "Successfully created a new technician.",
+        })
+      );
+    } catch (err) {
+      console.log(err);
+      const errorList = formatMongooseErrors(err);
+      return res.status(400).json(apiResponse({ errors: errorList }));
+    }
   },
 ]);
+
+router.get(
+  "/all-technicians",
+  [verifyJwt, authorizeRoles(roles.MANAGER)],
+  async (req, res) => {
+    try {
+      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
+      const accounts = await Company.findById(
+        companyId,
+        "-_id technicians.firstName technicians.lastName"
+      ).exec();
+
+      res.status(200).json(apiResponse({ data: accounts }));
+    } catch (error) {
+      res
+        .status(500)
+        .json(apiResponse({ errors: [{ message: error.message }] }));
+    }
+  }
+);
 module.exports = router;
