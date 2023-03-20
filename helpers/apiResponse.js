@@ -1,13 +1,7 @@
-module.exports = (errors, payload) => {
-  if (errors) {
-    return {
-      data: {
-        errors,
-      },
-    };
-  } else {
-    return {
-      data: payload || {},
-    };
-  }
+module.exports = ({ errors, data, message }) => {
+  return {
+    errors: errors || null,
+    data: data || null,
+    message: message || null,
+  };
 };

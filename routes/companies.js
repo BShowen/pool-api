@@ -23,11 +23,11 @@ router.post("/signup", [
         email: req.body.email,
       });
       if (!!company) {
-        return res
-          .status(200)
-          .json(
-            apiResponse([{ message: "That company email is already in use." }])
-          );
+        return res.status(200).json(
+          apiResponse({
+            errors: [{ message: "That company email is already in use." }],
+          })
+        );
       } else {
         next();
       }
@@ -48,9 +48,11 @@ router.post("/signup", [
       req.body.owner.password = await bcrypt.hash(req.body.owner.password, 10);
       next();
     } catch (err) {
-      return res
-        .status(500)
-        .json(apiResponse([{ message: "Error hashing password" }]));
+      return res.status(500).json(
+        apiResponse({
+          errors: [{ message: "Error hashing password" }],
+        })
+      );
     }
   },
   async (req, res) => {
@@ -63,10 +65,10 @@ router.post("/signup", [
           expiresIn: process.env.JWT_MAX_AGE,
         }
       );
-      res.status(200).json(apiResponse(false, { apiToken }));
+      res.status(200).json(apiResponse({ data: apiToken }));
     } catch (err) {
       const errorList = formatMongooseErrors(err);
-      return res.status(400).json(apiResponse(errorList));
+      return res.status(400).json(apiResponse({ errors: errorList }));
     }
   },
 ]);
@@ -87,7 +89,7 @@ router.post("/login", [
     }
 
     if (errors.length) {
-      return res.status(400).json(apiResponse(errors));
+      return res.status(400).json(apiResponse({ errors }));
     }
     next();
   },
@@ -95,29 +97,29 @@ router.post("/login", [
     // Get the email and password from request.
     const email = req.body.email?.toLowerCase();
     const password = req.body.password;
-    const errors = [];
+    try {
+      // Retrieve just the email and password for the company owner.
+      const company = await Company.findOne({ email });
+      if (!company) {
+        throw new Error("Invalid email.");
+      }
 
-    // Retrieve just the email and password for the company owner.
-    const company = await Company.findOne({ email });
-    if (!company) {
-      errors.push({ message: "Invalid email." });
-    }
-
-    // Compare passwords.
-    if (
-      errors.length == 0 &&
-      bcrypt.compareSync(password, company.owner.password)
-    ) {
-      // Return 200 status with api key if matched
-      const apiToken = signJwt(
-        { c_id: company._id, roles: company.owner.roles },
-        { expiresIn: process.env.JWT_MAX_AGE }
-      );
-      res.status(200).json(apiResponse(false, apiToken));
-    } else {
+      // Compare passwords.
+      if (bcrypt.compareSync(password, company.owner.password)) {
+        // Return 200 status with api key if matched
+        const apiToken = signJwt(
+          { c_id: company._id, roles: company.owner.roles },
+          { expiresIn: process.env.JWT_MAX_AGE }
+        );
+        res.status(200).json(apiResponse({ data: apiToken }));
+      } else {
+        throw new Error("Invalid password.");
+      }
+    } catch (error) {
       // Return 401 status with error message if not matched.
-      errors.push({ message: "Invalid password." });
-      res.status(400).json(apiResponse(errors));
+      res
+        .status(401)
+        .json(apiResponse({ errors: [{ message: error.message }] }));
     }
   },
 ]);
@@ -131,17 +133,15 @@ router.post("/new-account", [
       const company = await Company.findById(companyId);
       company.accounts.push(company.accounts.create(req.body));
       await company.save();
-      return res
-        .status(200)
-        .json(
-          apiResponse(false, {
-            message: "Successfully created a new customer account.",
-          })
-        );
+      return res.status(200).json(
+        apiResponse({
+          message: "Successfully created a new customer account.",
+        })
+      );
     } catch (err) {
       console.log(err);
       const errorList = formatMongooseErrors(err);
-      return res.status(400).json(apiResponse(errorList));
+      return res.status(400).json(apiResponse({ errors: errorList }));
     }
   },
 ]);
