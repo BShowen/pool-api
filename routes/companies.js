@@ -146,4 +146,30 @@ router.post("/new-account", [
   },
 ]);
 
+router.get(
+  "/all-accounts",
+  [verifyJwt, authorizeRoles(roles.MANAGER)],
+  async (req, res) => {
+    try {
+      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
+      const accounts = await Company.findById(
+        companyId,
+        "-_id accounts.accountName"
+      ).exec();
+      res.status(200).json(apiResponse({ data: accounts }));
+    } catch (error) {
+      res
+        .status(500)
+        .json(apiResponse({ errors: [{ message: error.message }] }));
+    }
+  }
+);
+
+router.post("/new-technician", [
+  verifyJwt,
+  authorizeRoles(roles.MANAGER),
+  (req, res) => {
+    res.status(200).json(apiResponse({ message: "Success." }));
+  },
+]);
 module.exports = router;
