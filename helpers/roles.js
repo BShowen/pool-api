@@ -1,6 +1,7 @@
 module.exports = {
   ADMIN: ["ADMIN"],
   MANAGER: ["ADMIN", "MANAGER"],
-  CUSTOMER: ["ADMIN", "MANAGER", "CUSTOMER"],
+  TECH: ["ADMIN", "MANAGER", "TECH"],
+  CUSTOMER: ["ADMIN", "MANAGER", "TECH", "CUSTOMER"],
   all: ["ADMIN", "MANAGER", "TECH", "CUSTOMER"],
 };
