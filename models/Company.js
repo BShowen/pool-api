@@ -73,6 +73,25 @@ const companySchema = new Schema({
         required: [true, "Account name is required."],
         set: toLowerCase,
       },
+      service: {
+        type: {
+          type: String, //Full service
+          required: false,
+          set: toLowerCase,
+          default: "full service",
+        },
+        day: {
+          type: String, //monday, tuesday, etc.
+          required: false,
+          set: toLowerCase,
+        },
+        frequency: {
+          type: String, //weekly, bi-weekly, etc.
+          required: true,
+          set: toLowerCase,
+          default: "weekly",
+        },
+      },
       accountOwners: {
         type: [
           {
