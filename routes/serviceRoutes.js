@@ -108,4 +108,34 @@ router.get("/all", [
   },
 ]);
 
+router.post("/update", [
+  verifyJwt,
+  authorizeRoles(roles.MANAGER),
+  async (req, res, next) => {
+    try {
+      const serviceRouteId = new mongoose.Types.ObjectId(
+        req.body.serviceRouteId
+      );
+      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
+      const results = await ServiceRoute.findOneAndUpdate(
+        { _id: serviceRouteId, companyId },
+        req.body
+      );
+
+      if (!results) {
+        return next(new Error("Unable to update the service route."));
+      }
+      res
+        .status(200)
+        .json(
+          apiResponse({ message: "Successfully updated the service route." })
+        );
+    } catch (error) {
+      const errorList = formatErrors(error);
+      res.status(500);
+      next(new Error(errorList));
+    }
+  },
+]);
+
 module.exports = router;
