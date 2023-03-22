@@ -8,12 +8,10 @@ module.exports = function formatErrors(errorObj) {
   if (errorObj.name === "ValidationError") {
     const errors = errorObj.errors;
     for (const key in errors) {
-      errorMessageList.push({
-        message: errors[key].message,
-      });
+      errorMessageList.push(errors[key].message);
     }
   } else {
-    errorMessageList.push({ message: errorObj.message });
+    errorMessageList.push(errorObj.message);
   }
-  return errorMessageList;
+  return errorMessageList.join("|");
 };

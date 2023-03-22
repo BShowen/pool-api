@@ -29,7 +29,12 @@ app.use("/companies", companyRoute);
 
 app.use((err, req, res, next) => {
   // API error handler.
-  res.json(apiResponse({ errors: formatErrors(err) }));
+  // err.message can be a string of comma separated error messages or simply
+  // a string with one message.
+  const errorMessages = err.message.split("|").map((message) => {
+    return { message };
+  });
+  res.json(apiResponse({ errors: errorMessages }));
 });
 
 module.exports = app;

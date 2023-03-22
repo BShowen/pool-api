@@ -12,7 +12,9 @@ module.exports = async function authenticateJWT(req, res, next) {
     { maxAge: process.env.JWT_MAX_AGE },
     (err, decodedToken) => {
       if (err) {
-        res.sendStatus(401);
+        res.status(401);
+        next(new Error("Invalid api token."));
+        // res.sendStatus(401);
       } else {
         req.token = decodedToken;
         next();
