@@ -2,7 +2,7 @@ const roles = require("./roles");
 const verifyJwt = require("./verifyJwt");
 const authorizeRoles = require("./authorizeRoles.js");
 const apiResponse = require("./apiResponse");
-const formatMongooseErrors = require("./formatMongooseErrors");
+const formatErrors = require("./formatErrors");
 const signJwt = require("./signJwt");
 
 module.exports = {
@@ -10,6 +10,6 @@ module.exports = {
   verifyJwt,
   authorizeRoles,
   apiResponse,
-  formatMongooseErrors,
+  formatErrors,
   signJwt,
 };
