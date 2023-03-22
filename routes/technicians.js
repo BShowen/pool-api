@@ -111,4 +111,40 @@ router.post("/delete", [
   },
 ]);
 
+router.post("/update", [
+  verifyJwt,
+  authorizeRoles(roles.MANAGER),
+  async (req, res, next) => {
+    /**
+     * Hash the password, if it was provided.
+     * If no password was provided then this middleware gets skipped and
+     * mongoose validation will handle the missing password.
+     */
+    if (!req.body.password) return next();
+
+    try {
+      req.body.password = await bcrypt.hash(req.body.password, 10);
+      next();
+    } catch (err) {
+      res.status(500);
+      next(new Error("Error hashing password."));
+    }
+  },
+  async (req, res, next) => {
+    try {
+      const techId = new mongoose.Types.ObjectId(req.body.technicianId);
+      await Technician.findOneAndUpdate({ _id: techId }, req.body);
+      res
+        .status(200)
+        .json(apiResponse({ message: "Successfully updated a technician." }));
+      // if (!technician) {
+      //   return next(new Error("A technician with that id could not be found."));
+      // }
+    } catch (error) {
+      res.status(400);
+      next(new Error("Invalid technician id."));
+    }
+  },
+]);
+
 module.exports = router;
