@@ -3,13 +3,13 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 // local modules
-const { roles } = require("../../helpers");
+const { roles } = require("../helpers");
 
 function toLowerCase(value) {
   return value.trim().toLowerCase();
 }
 
-module.exports = new Schema(
+const technicianSchema = new Schema(
   {
     firstName: {
       type: String,
@@ -48,8 +48,15 @@ module.exports = new Schema(
       enum: {
         values: roles.all,
         message: "{VALUE} is not a supported role.",
-        set: toLowerCase,
       },
+    },
+    serviceRoute: {
+      type: [
+        {
+          type: mongoose.Types.ObjectId,
+          ref: "CustomerAccount",
+        },
+      ],
     },
   },
   {
@@ -62,3 +69,5 @@ module.exports = new Schema(
     },
   }
 );
+
+module.exports = mongoose.model("Technician", technicianSchema);

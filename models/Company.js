@@ -4,7 +4,6 @@ const Schema = mongoose.Schema;
 
 // local modules
 const { roles } = require("../helpers");
-const { customerAccountSchema, technicianSchema } = require("./subDocuments");
 
 function toLowerCase(value) {
   return value.trim().toLowerCase();
@@ -67,8 +66,22 @@ const companySchema = new Schema({
     required: [true, "Company address is required."],
     set: toLowerCase,
   },
-  accounts: [customerAccountSchema],
-  technicians: [technicianSchema],
+  accounts: {
+    type: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "CustomerAccount",
+      },
+    ],
+  },
+  technicians: {
+    type: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Technician",
+      },
+    ],
+  },
 });
 
 module.exports = mongoose.model("Company", companySchema);

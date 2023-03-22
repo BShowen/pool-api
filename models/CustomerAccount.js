@@ -6,7 +6,7 @@ function toLowerCase(value) {
   return value.trim().toLowerCase();
 }
 
-module.exports = new Schema({
+const customerAccountSchema = new Schema({
   accountName: {
     type: String,
     required: [true, "Account name is required."],
@@ -125,3 +125,5 @@ module.exports = new Schema({
     },
   ],
 });
+
+module.exports = mongoose.model("CustomerAccount", customerAccountSchema);
