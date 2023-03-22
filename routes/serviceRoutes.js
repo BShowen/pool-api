@@ -86,4 +86,26 @@ router.post("/new", [
   },
 ]);
 
+router.get("/all", [
+  verifyJwt,
+  authorizeRoles(roles.TECH), //Authorize for techs and higher.
+  async (req, res, next) => {
+    try {
+      const companyId = req.token.c_id;
+      const serviceRouteList = await ServiceRoute.find({
+        companyId: companyId,
+      }).populate({
+        path: "technician",
+        select: "-_id firstName lastName",
+      });
+      res
+        .status(200)
+        .json(apiResponse({ data: { serviceRoutes: serviceRouteList } }));
+    } catch (error) {
+      const errorList = formatErrors(error);
+      next(new Error(errorList));
+    }
+  },
+]);
+
 module.exports = router;
