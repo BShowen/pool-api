@@ -74,14 +74,6 @@ const companySchema = new Schema({
       },
     ],
   },
-  technicians: {
-    type: [
-      {
-        type: mongoose.Types.ObjectId,
-        ref: "Technician",
-      },
-    ],
-  },
 });
 
 module.exports = mongoose.model("Company", companySchema);

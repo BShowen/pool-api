@@ -50,6 +50,11 @@ const technicianSchema = new Schema(
         message: "{VALUE} is not a supported role.",
       },
     },
+    companyId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Company",
+      required: [true, "Technician employer is required."],
+    },
     serviceRoute: {
       type: [
         {

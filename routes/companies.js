@@ -2,18 +2,12 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-const mongoose = require("mongoose");
 
 // local modules
-const { Company, CustomerAccount, Technician } = require("../models");
-const {
-  apiResponse,
-  formatErrors,
-  signJwt,
-  verifyJwt,
-  authorizeRoles,
-  roles,
-} = require("../helpers");
+const { Company } = require("../models");
+const { apiResponse, formatErrors, signJwt } = require("../helpers");
+const customerAccountsRoute = require("./customerAccounts");
+const technicianRoute = require("./technicians");
 
 router.post("/signup", [
   async (req, res, next) => {
@@ -124,140 +118,8 @@ router.post("/login", [
   },
 ]);
 
-router.post("/new-account", [
-  verifyJwt,
-  authorizeRoles(roles.MANAGER),
-  async (req, res) => {
-    try {
-      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
-      const company = await Company.findById(companyId);
-      if (!company) {
-        // The company isn't in the DB. This can happen when a company is
-        // deleted and then the same apiToken is still used.
-        throw new Error("Cannot find that company.");
-      }
-      const newCustomerAccount = new CustomerAccount(req.body);
-      await newCustomerAccount.save();
-      company.accounts.push(newCustomerAccount);
-      await company.save();
-      return res.status(200).json(
-        apiResponse({
-          message: "Successfully created a new customer account.",
-        })
-      );
-    } catch (err) {
-      const errorList = formatErrors(err);
-      return res.status(400).json(apiResponse({ errors: errorList }));
-    }
-  },
-]);
+router.use("/customer-accounts", customerAccountsRoute);
 
-router.get(
-  "/all-accounts",
-  [verifyJwt, authorizeRoles(roles.MANAGER)],
-  async (req, res) => {
-    try {
-      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
-      const accounts = await Company.findById(
-        companyId,
-        "-_id accountName"
-      ).populate({
-        path: "accounts",
-        select: "-_id accountName",
-      });
-      if (!accounts) {
-        // The company isn't in the DB. This can happen when a company is
-        // deleted and then the apiToken same is still used.
-        throw new Error("Cannot find that company.");
-      }
-      res.status(200).json(apiResponse({ data: accounts }));
-    } catch (error) {
-      res
-        .status(500)
-        .json(apiResponse({ errors: [{ message: error.message }] }));
-    }
-  }
-);
+router.use("/technicians", technicianRoute);
 
-router.post("/new-technician", [
-  verifyJwt,
-  authorizeRoles(roles.MANAGER),
-  async (req, res, next) => {
-    /**
-     * Hash the password, if it was provided.
-     * If no password was provided then this middleware gets skipped and
-     * mongoose validation will handle the missing password.
-     */
-    if (!req.body.password) return next();
-
-    try {
-      req.body.password = await bcrypt.hash(req.body.password, 10);
-      next();
-    } catch (err) {
-      return res.status(500).json(
-        apiResponse({
-          errors: [{ message: "Error hashing password" }],
-        })
-      );
-    }
-  },
-  async (req, res) => {
-    try {
-      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
-      const company = await Company.findById(companyId);
-      if (!company) {
-        // The company isn't in the DB. This can happen when a company is
-        // deleted and then the same apiToken is still used.
-        throw new Error("Cannot find that company.");
-      }
-      const techs = await Technician.countDocuments({
-        emailAddress: req.body.emailAddress,
-      });
-      if (techs > 0) {
-        throw new Error("A technician with that email already exists.");
-      }
-      const newTechnician = new Technician(req.body);
-      await newTechnician.save();
-      company.technicians.push(newTechnician);
-      await company.save();
-      return res.status(200).json(
-        apiResponse({
-          message: "Successfully created a new technician.",
-        })
-      );
-    } catch (err) {
-      console.log(err);
-      const errorList = formatErrors(err);
-      return res.status(400).json(apiResponse({ errors: errorList }));
-    }
-  },
-]);
-
-router.get(
-  "/all-technicians",
-  [verifyJwt, authorizeRoles(roles.MANAGER)],
-  async (req, res) => {
-    try {
-      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
-      const accounts = await Company.findById(
-        companyId,
-        "-_id firstName lastName"
-      ).populate({
-        path: "technicians",
-        select: "-_id firstName lastName",
-      });
-      if (!accounts) {
-        // The company isn't in the DB. This can happen when a company is
-        // deleted and then the same apiToken is still used.
-        throw new Error("Cannot find that company.");
-      }
-
-      res.status(200).json(apiResponse({ data: accounts }));
-    } catch (error) {
-      res
-        .status(500)
-        .json(apiResponse({ errors: [{ message: error.message }] }));
-    }
-  }
-);
 module.exports = router;
