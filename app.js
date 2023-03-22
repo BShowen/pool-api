@@ -1,3 +1,4 @@
+// npm modules
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
@@ -6,6 +7,9 @@ const mongoose = require("mongoose");
 
 // Require secrets.
 require("dotenv").config();
+
+// local modules.
+const { apiResponse, formatErrors } = require("./helpers");
 
 mongoose
   .connect(process.env.DB_STRING)
@@ -22,5 +26,10 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/companies", companyRoute);
+
+app.use((err, req, res, next) => {
+  // API error handler.
+  res.json(apiResponse({ errors: formatErrors(err) }));
+});
 
 module.exports = app;

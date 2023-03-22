@@ -84,9 +84,6 @@ router.post("/new", [
       return res.status(400).json(apiResponse({ errors: errorList }));
     }
   },
-  (err, req, res, next) => {
-    res.json(apiResponse({ errors: formatErrors(err) }));
-  },
 ]);
 
 module.exports = router;
