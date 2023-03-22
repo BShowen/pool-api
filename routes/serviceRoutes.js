@@ -2,6 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
+const async = require("async");
 
 // Local modules
 const {
@@ -22,43 +23,66 @@ router.post("/new", [
   verifyJwt,
   authorizeRoles(roles.ADMIN),
   async (req, res, next) => {
-    // verify company existence.
-    try {
-      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
-      const companyExists = await Company.countDocuments({
-        _id: companyId,
-      });
-      if (!companyExists) {
-        next(new Error("That company doesn't exist."));
+    async.parallel(
+      {
+        companyIsValid: async () => {
+          // verify company existence.
+          try {
+            const companyId = new mongoose.Types.ObjectId(req.token.c_id);
+            return await Company.countDocuments({
+              _id: companyId,
+            });
+          } catch (error) {
+            throw new Error("Invalid company id.");
+          }
+        },
+        technicianIsValid: async () => {
+          // find the technician. return error if not found.
+          try {
+            const technicianId = new mongoose.Types.ObjectId(
+              req.body.technicianId
+            );
+            return await Technician.countDocuments({
+              _id: technicianId,
+            });
+          } catch (error) {
+            throw new Error("Invalid technician id.");
+          }
+        },
+        customerAccountIsValid: async () => {
+          // find the customer account. return error if not found.
+          try {
+            const customerAccountId = new mongoose.Types.ObjectId(
+              req.body.customerAccountId
+            );
+            return await CustomerAccount.countDocuments({
+              _id: customerAccountId,
+            });
+          } catch (error) {
+            throw new Error("Invalid customer account id.");
+          }
+        },
+      },
+      (error, results) => {
+        if (error) {
+          const errorList = formatErrors(error);
+          next(errorList);
+        }
+
+        if (!results.customerAccountIsValid) {
+          next(new Error("That customer account doesn't exist."));
+        }
+
+        if (!results.technicianIsValid) {
+          new Error("A technician with that id could not be found.");
+        }
+
+        if (!results.companyIsValid) {
+          next(new Error("A company with that id could not be found."));
+        }
+        next();
       }
-    } catch (error) {
-      next(new Error("Invalid company id."));
-    }
-    // find the technician. return error if not found.
-    try {
-      const technicianId = new mongoose.Types.ObjectId(req.body.technicianId);
-      const technician = await Technician.countDocuments({ _id: technicianId });
-      if (!technician) {
-        next(new Error("That technician doesn't exist."));
-      }
-    } catch (error) {
-      next(new Error("Invalid technician id."));
-    }
-    // find the customer account. return error if not found.
-    try {
-      const customerAccountId = new mongoose.Types.ObjectId(
-        req.body.customerAccountId
-      );
-      const customerAccountExists = await CustomerAccount.countDocuments({
-        _id: customerAccountId,
-      });
-      if (!customerAccountExists) {
-        next(new Error("That customer account doesn't exist."));
-      }
-    } catch (error) {
-      next(new Error("Invalid customer account id."));
-    }
-    next();
+    );
   },
   async (req, res) => {
     try {
@@ -80,7 +104,8 @@ router.post("/new", [
     } catch (error) {
       console.log(error);
       const errorList = formatErrors(error);
-      return res.status(400).json(apiResponse({ errors: errorList }));
+      res.status(400);
+      next(new Error(errorList));
     }
   },
 ]);

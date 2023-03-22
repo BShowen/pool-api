@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 function toLowerCase(value) {
-  return value.trim().toLowerCase();
+  return value ? value.trim().toLowerCase() : undefined;
 }
 
 const serviceRouteSchema = new Schema({
