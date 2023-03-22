@@ -24,7 +24,7 @@ router.post("/new", [
   async (req, res, next) => {
     // verify company existence.
     try {
-      const companyId = new mongoose.Types.ObjectId(req.body.companyId);
+      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
       const companyExists = await Company.countDocuments({
         _id: companyId,
       });
@@ -63,13 +63,12 @@ router.post("/new", [
   async (req, res) => {
     try {
       const {
-        companyId,
         technicianId: technician,
         customerAccountId: customerAccounts,
         day,
       } = req.body;
       const newRoute = new ServiceRoute({
-        companyId,
+        companyId: req.token.c_id,
         technician,
         customerAccounts,
         day,
@@ -125,6 +124,7 @@ router.post("/update", [
       if (!results) {
         return next(new Error("Unable to update the service route."));
       }
+
       res
         .status(200)
         .json(
@@ -133,6 +133,35 @@ router.post("/update", [
     } catch (error) {
       const errorList = formatErrors(error);
       res.status(500);
+      next(new Error(errorList));
+    }
+  },
+]);
+
+router.post("/delete", [
+  verifyJwt,
+  authorizeRoles(roles.ADMIN),
+  async (req, res, next) => {
+    try {
+      const serviceRouteId = new mongoose.Types.ObjectId(
+        req.body.serviceRouteId
+      );
+      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
+      const { deletedCount } = await ServiceRoute.deleteOne({
+        _id: serviceRouteId,
+        companyId,
+      });
+      if (deletedCount > 0) {
+        res
+          .status(200)
+          .json(
+            apiResponse({ message: "Successfully deleted a service route." })
+          );
+      } else {
+        next(new Error("That service route could not be deleted."));
+      }
+    } catch (error) {
+      const errorList = formatErrors(error);
       next(new Error(errorList));
     }
   },
