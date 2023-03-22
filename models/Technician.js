@@ -55,14 +55,6 @@ const technicianSchema = new Schema(
       ref: "Company",
       required: [true, "Technician employer is required."],
     },
-    serviceRoute: {
-      type: [
-        {
-          type: mongoose.Types.ObjectId,
-          ref: "CustomerAccount",
-        },
-      ],
-    },
   },
   {
     virtuals: {

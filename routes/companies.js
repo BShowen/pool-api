@@ -8,6 +8,7 @@ const { Company } = require("../models");
 const { apiResponse, formatErrors, signJwt } = require("../helpers");
 const customerAccountsRoute = require("./customerAccounts");
 const technicianRoute = require("./technicians");
+const serviceRouteRoute = require("./serviceRoutes");
 
 router.post("/signup", [
   async (req, res, next) => {
@@ -121,5 +122,7 @@ router.post("/login", [
 router.use("/customer-accounts", customerAccountsRoute);
 
 router.use("/technicians", technicianRoute);
+
+router.use("/routes", serviceRouteRoute);
 
 module.exports = router;

@@ -94,47 +94,4 @@ router.get(
   }
 );
 
-router.post("/routes/add", [
-  verifyJwt,
-  authorizeRoles(roles.ADMIN),
-  async (req, res, next) => {
-    // find the technician. return error if not found.
-    try {
-      const technicianId = new mongoose.Types.ObjectId(req.body.technicianId);
-      const technician = await Technician.findById(technicianId);
-      if (!technician) {
-        next(new Error("That technician doesn't exist."));
-      }
-    } catch (error) {
-      next(new Error("Invalid technician id."));
-    }
-    // find the customer account. return error if not found.
-    try {
-      const customerAccountId = new mongoose.Types.ObjectId(
-        req.body.customerAccountId
-      );
-      const customerAccountExists = CustomerAccount.countDocuments({
-        id: customerAccountId,
-      });
-      if (!customerAccountExists) {
-        next(new Error("That customer account doesn't exist."));
-      }
-    } catch (error) {
-      next(new Error("Invalid customer account id."));
-    }
-    // check for duplicate addition. return error if duplicate.
-
-    next();
-  },
-  (req, res, next) => {
-    next();
-  },
-  (req, res) => {
-    res.send("Not implemented");
-  },
-  (err, req, res, next) => {
-    res.json(apiResponse({ errors: formatErrors(err) }));
-  },
-]);
-
 module.exports = router;
