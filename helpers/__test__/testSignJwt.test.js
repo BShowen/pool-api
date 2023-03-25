@@ -1,4 +1,5 @@
-const { signJwt, verifyJwt } = require("../index");
+const signJwt = require("../signJwt");
+const verifyJwt = require("../verifyJwt");
 
 beforeAll(() => {
   // Set a temporary password for signJwt to use.
@@ -10,6 +11,7 @@ let payload;
 let options;
 beforeEach(() => {
   payload = {
+    c_id: "641f3e9e3a44f4a5c6eae827",
     roles: ["ADMIN"],
     language: "en",
     theme: "dark",

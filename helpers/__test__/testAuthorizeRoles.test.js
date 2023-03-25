@@ -1,4 +1,5 @@
-const { authorizeRoles, roles } = require("../index");
+const authorizeRoles = require("../authorizeRoles");
+const roles = require("../roles");
 
 describe("The authorizeRoles function", () => {
   test("returns a middleware function", () => {

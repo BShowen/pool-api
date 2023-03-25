@@ -91,7 +91,7 @@ router.get("/all", [
     } catch (error) {
       res.status(400);
       const errorList = formatErrors(error);
-      next(errorList);
+      next(new Error(errorList));
     }
   },
 ]);

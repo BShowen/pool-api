@@ -1,4 +1,4 @@
-const { apiResponse } = require("../index");
+const apiResponse = require("../apiResponse");
 
 test("apiResponse to always return data, errors, and message", () => {
   expect(apiResponse()).toEqual({

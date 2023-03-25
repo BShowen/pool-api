@@ -1,3 +1,7 @@
+// npm modules
+const mongoose = require("mongoose");
+
+// local modules
 const jwt = require("jsonwebtoken");
 
 /**
@@ -16,8 +20,13 @@ module.exports = async function authenticateJWT(req, res, next) {
         next(new Error("Invalid api token."));
         // res.sendStatus(401);
       } else {
-        req.token = decodedToken;
-        next();
+        if (mongoose.Types.ObjectId.isValid(decodedToken.c_id)) {
+          req.token = decodedToken;
+          next();
+        } else {
+          res.status(401);
+          next(new Error("Invalid token id."));
+        }
       }
     }
   );
