@@ -31,7 +31,6 @@ app.use((err, req, res, next) => {
   // API error handler.
   // err.message can be a string of comma separated error messages or simply
   // a string with one message.
-  console.log("app error messages ---> ", err);
   const errorMessages = err.message.split("|").map((message) => {
     return { message };
   });
