@@ -1,7 +1,7 @@
-module.exports = ({ errors, data, message }) => {
+module.exports = (options = {}) => {
   return {
-    errors: errors || null,
-    data: data || null,
-    message: message || null,
+    errors: options.errors || null,
+    data: options.data || null,
+    message: options.message || null,
   };
 };
