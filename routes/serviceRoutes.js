@@ -15,73 +15,73 @@ const formatErrors = require("../helpers/formatErrors");
 const verifyJwt = require("../helpers/verifyJwt");
 const authorizeRoles = require("../helpers/authorizeRoles");
 const roles = require("../helpers/roles");
+const validateReferentialIntegrity = require("../helpers/validateReferentialIntegrity");
 
 router.post("/new", [
   verifyJwt,
   authorizeRoles(roles.ADMIN),
   async (req, res, next) => {
+    // verify existence of the company in the jwt.
+    const companyExists = await validateReferentialIntegrity(
+      req.token.c_id,
+      "Company"
+    );
+    if (companyExists) return next();
+
+    return next(new Error("Invalid token id."));
+  },
+  async (req, res, next) => {
     async.parallel(
-      {
-        companyIsValid: async () => {
-          // verify company existence.
-          try {
-            const companyId = new mongoose.Types.ObjectId(req.token.c_id);
-            return await Company.countDocuments({
-              _id: companyId,
-            });
-          } catch (error) {
-            throw new Error("Invalid company id.");
-          }
+      [
+        async function () {
+          // Verify existence of the technician.
+          return {
+            isValid: await validateReferentialIntegrity(
+              req.body.technicianId,
+              "Technician"
+            ),
+            message: "Invalid technician.",
+          };
         },
-        technicianIsValid: async () => {
-          // find the technician. return error if not found.
-          try {
-            const technicianId = new mongoose.Types.ObjectId(
-              req.body.technicianId
-            );
-            return await Technician.countDocuments({
-              _id: technicianId,
-            });
-          } catch (error) {
-            throw new Error("Invalid technician id.");
-          }
+        async function () {
+          // verify existence of the customer account.
+          return {
+            isValid: await validateReferentialIntegrity(
+              req.body.customerAccountId,
+              "CustomerAccount"
+            ),
+            message: "Invalid customer account.",
+          };
         },
-        customerAccountIsValid: async () => {
-          // find the customer account. return error if not found.
-          try {
-            const customerAccountId = new mongoose.Types.ObjectId(
-              req.body.customerAccountId
-            );
-            return await CustomerAccount.countDocuments({
-              _id: customerAccountId,
-            });
-          } catch (error) {
-            throw new Error("Invalid customer account id.");
-          }
-        },
-      },
+      ],
       (error, results) => {
         if (error) {
+          // Format any errors that are thrown from async.parallel
           const errorList = formatErrors(error);
-          next(errorList);
+          return next(new Error(errorList));
         }
 
-        if (!results.customerAccountIsValid) {
-          next(new Error("That customer account doesn't exist."));
-        }
+        // format any error messages after verifying model existence
+        const errors = results
+          .map((result) => {
+            if (!result.isValid) {
+              return new Error(result.message);
+            }
+          })
+          .filter((item) => item);
 
-        if (!results.technicianIsValid) {
-          new Error("A technician with that id could not be found.");
+        if (errors.length) {
+          const formattedErrorList = formatErrors(errors);
+          res.status(400);
+          next(new Error(formattedErrorList));
+        } else {
+          next();
         }
-
-        if (!results.companyIsValid) {
-          next(new Error("A company with that id could not be found."));
-        }
-        next();
       }
     );
   },
-  async (req, res) => {
+  async (req, res, next) => {
+    // Try to create a new service route.
     try {
       const {
         technicianId: technician,
@@ -109,19 +109,36 @@ router.get("/all", [
   verifyJwt,
   authorizeRoles(roles.TECH), //Authorize for techs and higher.
   async (req, res, next) => {
+    // Verify the existence of the company in the jwt.
+    const companyExists = await validateReferentialIntegrity(
+      req.token.c_id,
+      "Company"
+    );
+    if (companyExists) return next();
+
+    return next(new Error("Invalid token id."));
+  },
+  async (req, res, next) => {
+    // Try to retrieve a list of service routes from the db.
     try {
       const companyId = req.token.c_id;
       const serviceRouteList = await ServiceRoute.find({
         companyId: companyId,
-      }).populate({
-        path: "technician",
-        select: "-_id firstName lastName",
-      });
+      })
+        .populate({
+          path: "technician",
+          select: "-_id firstName lastName",
+        })
+        .populate({
+          path: "customerAccounts",
+          select: "accountName",
+        });
       res
         .status(200)
         .json(apiResponse({ data: { serviceRoutes: serviceRouteList } }));
     } catch (error) {
       const errorList = formatErrors(error);
+      res.status(400);
       next(new Error(errorList));
     }
   },
@@ -131,6 +148,27 @@ router.post("/update", [
   verifyJwt,
   authorizeRoles(roles.MANAGER),
   async (req, res, next) => {
+    // Verify the existence of the company in the jwt.
+    const companyExists = await validateReferentialIntegrity(
+      req.token.c_id,
+      "Company"
+    );
+    if (companyExists) return next();
+
+    return next(new Error("Invalid token id."));
+  },
+  async (req, res, next) => {
+    // Verify existence of the service route.
+    const modelExists = await validateReferentialIntegrity(
+      req.body?.serviceRouteId,
+      "ServiceRoute"
+    );
+    if (modelExists) return next();
+
+    return next(new Error("Invalid service route id."));
+  },
+  async (req, res, next) => {
+    // Try to perform the mongoose update.
     try {
       const serviceRouteId = new mongoose.Types.ObjectId(
         req.body.serviceRouteId
@@ -157,6 +195,26 @@ router.post("/update", [
 router.post("/delete", [
   verifyJwt,
   authorizeRoles(roles.ADMIN),
+  async (req, res, next) => {
+    // Verify the existence of the company in the jwt.
+    const companyExists = await validateReferentialIntegrity(
+      req.token.c_id,
+      "Company"
+    );
+    if (companyExists) return next();
+
+    return next(new Error("Invalid token id."));
+  },
+  async (req, res, next) => {
+    // Verify the existence of the company in the jwt.
+    const modelExists = await validateReferentialIntegrity(
+      req.body.serviceRouteId,
+      "ServiceRoute"
+    );
+    if (modelExists) return next();
+
+    return next(new Error("Invalid service route id."));
+  },
   async (req, res, next) => {
     try {
       const serviceRouteId = new mongoose.Types.ObjectId(

@@ -20,6 +20,15 @@ router.post("/new", [
   verifyJwt,
   authorizeRoles(roles.MANAGER),
   async (req, res, next) => {
+    const companyExists = await validateReferentialIntegrity(
+      req.token.c_id,
+      "Company"
+    );
+    if (companyExists) return next();
+
+    return next(new Error("Invalid token id."));
+  },
+  async (req, res, next) => {
     /**
      * Hash the password, if it was provided.
      * If no password was provided then this middleware gets skipped and
@@ -46,14 +55,14 @@ router.post("/new", [
 
       /*-------------------------------------------------*/
       const companyExists = await validateReferentialIntegrity(
-        req.body.companyId,
+        req.token.c_id,
         "Company"
       );
       if (!companyExists) {
         delete req.body.companyId;
       }
       /*-------------------------------------------------*/
-
+      req.body.companyId = req.token.c_id;
       const newTechnician = new Technician(req.body);
       await newTechnician.save();
       return res.status(201).json(
@@ -79,6 +88,15 @@ router.get("/all", [
   verifyJwt,
   authorizeRoles(roles.MANAGER),
   async (req, res, next) => {
+    const companyExists = await validateReferentialIntegrity(
+      req.token.c_id,
+      "Company"
+    );
+    if (companyExists) return next();
+
+    return next(new Error("Invalid token id."));
+  },
+  async (req, res, next) => {
     try {
       const companyId = new mongoose.Types.ObjectId(req.token.c_id);
       const technicianList = await Technician.find(
@@ -100,6 +118,15 @@ router.post("/delete", [
   verifyJwt,
   authorizeRoles(roles.ADMIN),
   async (req, res, next) => {
+    const companyExists = await validateReferentialIntegrity(
+      req.token.c_id,
+      "Company"
+    );
+    if (companyExists) return next();
+
+    return next(new Error("Invalid token id."));
+  },
+  async (req, res, next) => {
     try {
       const techId = new mongoose.Types.ObjectId(req.body.technicianId);
       const result = await Technician.deleteOne({ _id: techId });
@@ -119,6 +146,15 @@ router.post("/delete", [
 router.post("/update", [
   verifyJwt,
   authorizeRoles(roles.MANAGER),
+  async (req, res, next) => {
+    const companyExists = await validateReferentialIntegrity(
+      req.token.c_id,
+      "Company"
+    );
+    if (companyExists) return next();
+
+    return next(new Error("Invalid token id."));
+  },
   async (req, res, next) => {
     /**
      * Hash the password, if it was provided.

@@ -14,6 +14,7 @@ const models = {
  * Returns boolean indicating existence of the model in the DB.
  */
 async function validateReferentialIntegrity(mongooseId, modelName) {
+  let isValid = false;
   // Verify that the mongooseId is valid
   if (mongoose.Types.ObjectId.isValid(mongooseId)) {
     // Create a mongooseId from the provided id.
@@ -23,11 +24,10 @@ async function validateReferentialIntegrity(mongooseId, modelName) {
     // Query and get a count of matching documents.
     const count = await Model.countDocuments({ _id: modelId });
     // Return boolean indicating documents exists or not.
-    return count > 0;
+    isValid = count > 0;
   }
 
-  // If the mongooseId is not valid.
-  return false;
+  return isValid;
 }
 
 module.exports = validateReferentialIntegrity;
