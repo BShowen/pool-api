@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 // local modules
-const { roles } = require("../helpers");
+const roles = require("../helpers/roles");
 
 function toLowerCase(value) {
   return value.trim().toLowerCase();

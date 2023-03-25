@@ -4,8 +4,11 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 
 // local modules
-const { Company } = require("../models");
-const { apiResponse, formatErrors, signJwt } = require("../helpers");
+
+const Company = require("../models/Company");
+const apiResponse = require("../helpers/apiResponse");
+const formatErrors = require("../helpers/formatErrors");
+const signJwt = require("../helpers/signJwt");
 const customerAccountsRoute = require("./customerAccounts");
 const technicianRoute = require("./technicians");
 const serviceRouteRoute = require("./serviceRoutes");
@@ -18,11 +21,8 @@ router.post("/signup", [
         email: req.body.email,
       });
       if (!!company) {
-        return res.status(200).json(
-          apiResponse({
-            errors: [{ message: "That company email is already in use." }],
-          })
-        );
+        res.status(400);
+        return next(new Error("That company email is already in use."));
       } else {
         next();
       }
@@ -50,7 +50,7 @@ router.post("/signup", [
       );
     }
   },
-  async (req, res) => {
+  async (req, res, next) => {
     // Create Company and save to the DB.
     try {
       const savedCompany = await new Company(req.body).save();
@@ -60,10 +60,11 @@ router.post("/signup", [
           expiresIn: process.env.JWT_MAX_AGE,
         }
       );
-      res.status(200).json(apiResponse({ data: apiToken }));
+      res.status(201).json(apiResponse({ data: apiToken }));
     } catch (err) {
       const errorList = formatErrors(err);
-      return res.status(400).json(apiResponse({ errors: errorList }));
+      res.status(400);
+      next(new Error(errorList));
     }
   },
 ]);
@@ -76,19 +77,21 @@ router.post("/login", [
     const errors = [];
 
     if (email === undefined) {
-      errors.push({ message: "Email is required." });
+      errors.push(new Error("Email is required."));
     }
 
     if (password === undefined) {
-      errors.push({ message: "Password is required." });
+      errors.push(new Error("Password is required."));
     }
 
     if (errors.length) {
-      return res.status(400).json(apiResponse({ errors }));
+      res.status(400);
+      const errorList = formatErrors(errors);
+      return next(new Error(errorList));
     }
     next();
   },
-  async (req, res) => {
+  async (req, res, next) => {
     // Get the email and password from request.
     const email = req.body.email?.toLowerCase();
     const password = req.body.password;
@@ -112,9 +115,9 @@ router.post("/login", [
       }
     } catch (error) {
       // Return 401 status with error message if not matched.
-      res
-        .status(401)
-        .json(apiResponse({ errors: [{ message: error.message }] }));
+      res.status(401);
+      const errorList = formatErrors(error);
+      next(new Error(errorList));
     }
   },
 ]);

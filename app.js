@@ -9,13 +9,13 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 // local modules.
-const { apiResponse, formatErrors } = require("./helpers");
+const apiResponse = require("./helpers/apiResponse");
 
 mongoose
   .connect(process.env.DB_STRING)
   .catch((error) => console.log("Error connecting to Mongo: ", error));
 
-const { companyRoute } = require("./routes");
+const companyRoute = require("./routes/companies");
 
 const app = express();
 
@@ -31,6 +31,7 @@ app.use((err, req, res, next) => {
   // API error handler.
   // err.message can be a string of comma separated error messages or simply
   // a string with one message.
+  console.log("app error messages ---> ", err);
   const errorMessages = err.message.split("|").map((message) => {
     return { message };
   });

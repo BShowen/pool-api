@@ -4,14 +4,14 @@ const router = express.Router();
 const mongoose = require("mongoose");
 
 // local modules
-const {
-  apiResponse,
-  formatErrors,
-  verifyJwt,
-  authorizeRoles,
-  roles,
-} = require("../helpers");
-const { Company, CustomerAccount } = require("../models");
+const apiResponse = require("../helpers/apiResponse");
+const formatErrors = require("../helpers/formatErrors");
+const verifyJwt = require("../helpers/verifyJwt");
+const authorizeRoles = require("../helpers/authorizeRoles");
+const roles = require("../helpers/roles");
+
+const Company = require("../models/Company");
+const CustomerAccount = require("../models/CustomerAccount");
 
 router.post("/new", [
   verifyJwt,
@@ -28,14 +28,11 @@ router.post("/new", [
       }
       const newCustomerAccount = new CustomerAccount(req.body);
       await newCustomerAccount.save();
-      return res.status(200).json(
-        apiResponse({
-          message: "Successfully created a new customer account.",
-        })
-      );
+      return res.sendStatus(201);
     } catch (err) {
       const errorList = formatErrors(err);
-      return res.status(400).json(apiResponse({ errors: errorList }));
+      res.status(400);
+      next(new Error(errorList));
     }
   },
 ]);
@@ -59,9 +56,9 @@ router.get(
         .status(200)
         .json(apiResponse({ data: { accounts: customerAccountList } }));
     } catch (error) {
-      res
-        .status(500)
-        .json(apiResponse({ errors: [{ message: error.message }] }));
+      res.status(400);
+      const errorList = formatErrors(error);
+      next(new Error(errorList));
     }
   }
 );

@@ -5,19 +5,16 @@ const mongoose = require("mongoose");
 const async = require("async");
 
 // Local modules
-const {
-  Company,
-  Technician,
-  CustomerAccount,
-  ServiceRoute,
-} = require("../models");
-const {
-  apiResponse,
-  formatErrors,
-  verifyJwt,
-  authorizeRoles,
-  roles,
-} = require("../helpers");
+const Company = require("../models/Company");
+const Technician = require("../models/Technician");
+const CustomerAccount = require("../models/CustomerAccount");
+const ServiceRoute = require("../models/ServiceRoute");
+
+const apiResponse = require("../helpers/apiResponse");
+const formatErrors = require("../helpers/formatErrors");
+const verifyJwt = require("../helpers/verifyJwt");
+const authorizeRoles = require("../helpers/authorizeRoles");
+const roles = require("../helpers/roles");
 
 router.post("/new", [
   verifyJwt,
@@ -98,9 +95,7 @@ router.post("/new", [
         day,
       });
       await newRoute.save();
-      res
-        .status(200)
-        .json(apiResponse({ message: "Successfully created a new route." }));
+      res.sendStatus(201);
     } catch (error) {
       console.log(error);
       const errorList = formatErrors(error);
@@ -147,17 +142,13 @@ router.post("/update", [
       );
 
       if (!results) {
-        return next(new Error("Unable to update the service route."));
+        throw new Error("Unable to update the service route.");
       }
 
-      res
-        .status(200)
-        .json(
-          apiResponse({ message: "Successfully updated the service route." })
-        );
+      res.sendStatus(200);
     } catch (error) {
       const errorList = formatErrors(error);
-      res.status(500);
+      res.status(400);
       next(new Error(errorList));
     }
   },
@@ -177,13 +168,10 @@ router.post("/delete", [
         companyId,
       });
       if (deletedCount > 0) {
-        res
-          .status(200)
-          .json(
-            apiResponse({ message: "Successfully deleted a service route." })
-          );
+        res.sendStatus(204);
       } else {
-        next(new Error("That service route could not be deleted."));
+        res.status(404);
+        next(new Error("A service route with that id doesn't exist."));
       }
     } catch (error) {
       const errorList = formatErrors(error);

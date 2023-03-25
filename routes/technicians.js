@@ -6,14 +6,15 @@ const mongoose = require("mongoose");
 const async = require("async");
 
 // Local modules
-const { Company, Technician, CustomerAccount } = require("../models");
-const {
-  apiResponse,
-  formatErrors,
-  verifyJwt,
-  authorizeRoles,
-  roles,
-} = require("../helpers");
+const Technician = require("../models/Technician");
+const Company = require("../models/Company");
+
+const apiResponse = require("../helpers/apiResponse");
+const formatErrors = require("../helpers/formatErrors");
+const verifyJwt = require("../helpers/verifyJwt");
+const authorizeRoles = require("../helpers/authorizeRoles");
+const roles = require("../helpers/roles");
+const validateReferentialIntegrity = require("../helpers/validateReferentialIntegrity");
 
 router.post("/new", [
   verifyJwt,
@@ -42,9 +43,20 @@ router.post("/new", [
       if (alreadyExists) {
         throw new Error("A technician with that email already exists.");
       }
+
+      /*-------------------------------------------------*/
+      const companyExists = await validateReferentialIntegrity(
+        req.body.companyId,
+        "Company"
+      );
+      if (!companyExists) {
+        delete req.body.companyId;
+      }
+      /*-------------------------------------------------*/
+
       const newTechnician = new Technician(req.body);
       await newTechnician.save();
-      return res.status(200).json(
+      return res.status(201).json(
         apiResponse({
           data: {
             technician: {
@@ -53,7 +65,6 @@ router.post("/new", [
               lastName: newTechnician.lastName,
             },
           },
-          message: "Successfully created a new technician.",
         })
       );
     } catch (err) {
@@ -78,6 +89,7 @@ router.get("/all", [
         .status(200)
         .json(apiResponse({ data: { technicians: technicianList } }));
     } catch (error) {
+      res.status(400);
       const errorList = formatErrors(error);
       next(errorList);
     }
@@ -92,17 +104,10 @@ router.post("/delete", [
       const techId = new mongoose.Types.ObjectId(req.body.technicianId);
       const result = await Technician.deleteOne({ _id: techId });
       if (result.deletedCount > 0) {
-        res.status(200).json(
-          apiResponse({
-            message: "Successfully deleted a technician.",
-          })
-        );
+        res.sendStatus(204);
       } else {
-        res.status(200).json(
-          apiResponse({
-            message: "Could not find a technician with that id.",
-          })
-        );
+        res.status(404);
+        next(new Error("A technician with that id could not be found."));
       }
     } catch (error) {
       res.status(400);
@@ -133,13 +138,16 @@ router.post("/update", [
   async (req, res, next) => {
     try {
       const techId = new mongoose.Types.ObjectId(req.body.technicianId);
-      await Technician.findOneAndUpdate({ _id: techId }, req.body);
-      res
-        .status(200)
-        .json(apiResponse({ message: "Successfully updated a technician." }));
-      // if (!technician) {
-      //   return next(new Error("A technician with that id could not be found."));
-      // }
+      const results = await Technician.findOneAndUpdate(
+        { _id: techId },
+        req.body
+      );
+
+      if (!results) {
+        throw new Error("Unable to update the technician.");
+      }
+
+      res.sendStatus(200);
     } catch (error) {
       res.status(400);
       next(new Error("Invalid technician id."));
