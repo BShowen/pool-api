@@ -1,29 +1,29 @@
 // npm modules
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const bcrypt = require("bcrypt");
 
 // local modules
 const roles = require("../helpers/roles");
-
-function toLowerCase(value) {
-  return value.trim().toLowerCase();
-}
 
 const companySchema = new Schema({
   owner: {
     firstName: {
       type: String,
       required: [true, "First name is required."],
-      set: toLowerCase,
+      lowercase: true,
+      trim: true,
     },
     lastName: {
       type: String,
       required: [true, "Last name is required."],
-      set: toLowerCase,
+      lowercase: true,
+      trim: true,
     },
     password: {
       type: String,
       required: [true, "Password is required."],
+      trim: true,
     },
     roles: {
       type: [String],
@@ -37,14 +37,14 @@ const companySchema = new Schema({
       enum: {
         values: roles.all,
         message: "{VALUE} is not a supported role.",
-        set: toLowerCase,
       },
     },
   },
   name: {
     type: String,
     required: [true, "Company name is required."],
-    set: toLowerCase,
+    lowercase: true,
+    trim: true,
   },
   email: {
     type: String,
@@ -55,7 +55,8 @@ const companySchema = new Schema({
       message: (props) => `${props.value} is not a valid email.`,
     },
     required: [true, "Email is required."],
-    set: toLowerCase,
+    lowercase: true,
+    trim: true,
   },
   phoneNumber: {
     type: String,
@@ -64,7 +65,8 @@ const companySchema = new Schema({
   address: {
     type: String,
     required: [true, "Company address is required."],
-    set: toLowerCase,
+    lowercase: true,
+    trim: true,
   },
   accounts: {
     type: [
@@ -74,6 +76,11 @@ const companySchema = new Schema({
       },
     ],
   },
+});
+
+companySchema.pre("save", async function (next) {
+  this.owner.password = await bcrypt.hash(this.owner.password, 10);
+  next();
 });
 
 module.exports = mongoose.model("Company", companySchema);

@@ -9,7 +9,7 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 // local modules.
-const apiResponse = require("./helpers/apiResponse");
+const errorHandler = require("./helpers/errorHandler");
 
 mongoose
   .connect(process.env.DB_STRING)
@@ -27,14 +27,6 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/companies", companyRoute);
 
-app.use((err, req, res, next) => {
-  // API error handler.
-  // err.message can be a string of comma separated error messages or simply
-  // a string with one message.
-  const errorMessages = err.message.split("|").map((message) => {
-    return { message };
-  });
-  res.json(apiResponse({ errors: errorMessages }));
-});
+app.use(errorHandler);
 
 module.exports = app;

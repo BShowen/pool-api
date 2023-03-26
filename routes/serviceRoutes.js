@@ -2,20 +2,15 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-const async = require("async");
 
 // Local modules
-const Company = require("../models/Company");
-const Technician = require("../models/Technician");
-const CustomerAccount = require("../models/CustomerAccount");
 const ServiceRoute = require("../models/ServiceRoute");
-
 const apiResponse = require("../helpers/apiResponse");
-const formatErrors = require("../helpers/formatErrors");
 const verifyJwt = require("../helpers/verifyJwt");
 const authorizeRoles = require("../helpers/authorizeRoles");
 const roles = require("../helpers/roles");
 const validateReferentialIntegrity = require("../helpers/validateReferentialIntegrity");
+const ExtendedError = require("../helpers/ExtendedError");
 
 router.post("/new", [
   verifyJwt,
@@ -31,54 +26,33 @@ router.post("/new", [
     return next(new Error("Invalid token id."));
   },
   async (req, res, next) => {
-    async.parallel(
-      [
-        async function () {
-          // Verify existence of the technician.
-          return {
-            isValid: await validateReferentialIntegrity(
-              req.body.technicianId,
-              "Technician"
-            ),
-            message: "Invalid technician.",
-          };
-        },
-        async function () {
-          // verify existence of the customer account.
-          return {
-            isValid: await validateReferentialIntegrity(
-              req.body.customerAccountId,
-              "CustomerAccount"
-            ),
-            message: "Invalid customer account.",
-          };
-        },
-      ],
-      (error, results) => {
-        if (error) {
-          // Format any errors that are thrown from async.parallel
-          const errorList = formatErrors(error);
-          return next(new Error(errorList));
-        }
+    // Validate model existence.
+    const errorList = [];
 
-        // format any error messages after verifying model existence
-        const errors = results
-          .map((result) => {
-            if (!result.isValid) {
-              return new Error(result.message);
-            }
-          })
-          .filter((item) => item);
-
-        if (errors.length) {
-          const formattedErrorList = formatErrors(errors);
-          res.status(400);
-          next(new Error(formattedErrorList));
-        } else {
-          next();
-        }
-      }
+    const technicianValid = await validateReferentialIntegrity(
+      req.body.technicianId,
+      "Technician"
     );
+    if (!technicianValid) {
+      errorList.push(new ExtendedError("Invalid technician.", "technicianId"));
+    }
+
+    const customerAccountValid = await validateReferentialIntegrity(
+      req.body.customerAccountId,
+      "CustomerAccount"
+    );
+    if (!customerAccountValid) {
+      errorList.push(
+        new ExtendedError("Invalid customer account.", "customerAccountId")
+      );
+    }
+
+    if (errorList.length) {
+      res.status(400);
+      next(errorList);
+    } else {
+      next();
+    }
   },
   async (req, res, next) => {
     // Try to create a new service route.
@@ -95,12 +69,13 @@ router.post("/new", [
         day,
       });
       await newRoute.save();
-      res.sendStatus(201);
+      delete newRoute._doc.companyId;
+      delete newRoute._doc.__v;
+      res.status(201);
+      res.json(apiResponse({ data: newRoute }));
     } catch (error) {
-      console.log(error);
-      const errorList = formatErrors(error);
       res.status(400);
-      next(new Error(errorList));
+      next(error);
     }
   },
 ]);
@@ -165,7 +140,7 @@ router.post("/update", [
     );
     if (modelExists) return next();
 
-    return next(new Error("Invalid service route id."));
+    next(new ExtendedError("Invalid service route.", "serviceRouteId"));
   },
   async (req, res, next) => {
     // Try to perform the mongoose update.
@@ -174,20 +149,61 @@ router.post("/update", [
         req.body.serviceRouteId
       );
       const companyId = new mongoose.Types.ObjectId(req.token.c_id);
-      const results = await ServiceRoute.findOneAndUpdate(
-        { _id: serviceRouteId, companyId },
-        req.body
-      );
+      const serviceRoute = await ServiceRoute.findOne({
+        _id: serviceRouteId,
+        companyId,
+      });
 
-      if (!results) {
-        throw new Error("Unable to update the service route.");
+      /*----------------------------------------------------------------------*/
+      // Update the customer accounts array only if customerAccounts field
+      // was provided.
+      if (Object.hasOwn(req.body, "customerAccounts")) {
+        // Update the customer accounts array.
+
+        if (!Array.isArray(req.body.customerAccounts)) {
+          // Convert customerAccount to array if its not an array.
+          req.body.customerAccounts = [req.body.customerAccounts];
+        }
+
+        if (req.body.customerAccounts.length === 0) {
+          // Remove all customer accounts if empty array was provided.
+          serviceRoute.customerAccounts = [];
+        } else {
+          // Insert provided customer accounts into customer accounts array.
+          req.body.customerAccounts.forEach((newAccount) => {
+            if (mongoose.Types.ObjectId.isValid(newAccount)) {
+              serviceRoute.customerAccounts.push(newAccount);
+            } else {
+              throw new ExtendedError(
+                "Invalid customer account id.",
+                "customerAccounts"
+              );
+            }
+          });
+        }
+
+        // Remove customer accounts field. Its no longer needed.
+        delete req.body.customerAccounts;
       }
+      /*----------------------------------------------------------------------*/
 
-      res.sendStatus(200);
+      serviceRoute.set({ ...req.body });
+      const updatedDoc = await serviceRoute.save().then((results) => {
+        return results.populate({
+          path: "customerAccounts",
+          select: "accountName",
+        });
+      });
+      if (updatedDoc) {
+        delete updatedDoc._doc.companyId;
+        delete updatedDoc._doc.__v;
+        res.status(200);
+        res.json(apiResponse({ data: updatedDoc }));
+      } else {
+        res.sendStatus(400);
+      }
     } catch (error) {
-      const errorList = formatErrors(error);
-      res.status(400);
-      next(new Error(errorList));
+      next(error);
     }
   },
 ]);

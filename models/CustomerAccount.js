@@ -2,32 +2,32 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-function toLowerCase(value) {
-  return value.trim().toLowerCase();
-}
-
 const customerAccountSchema = new Schema({
   accountName: {
     type: String,
     required: [true, "Account name is required."],
-    set: toLowerCase,
+    lowercase: true,
+    trim: true,
   },
   service: {
     type: {
       type: String, //Full service
       required: false,
-      set: toLowerCase,
+      lowercase: true,
+      trim: true,
       default: "full service",
     },
     day: {
       type: String, //monday, tuesday, etc.
       required: false,
-      set: toLowerCase,
+      lowercase: true,
+      trim: true,
     },
     frequency: {
       type: String, //weekly, bi-weekly, etc.
       required: true,
-      set: toLowerCase,
+      lowercase: true,
+      trim: true,
       default: "weekly",
     },
   },
@@ -47,12 +47,14 @@ const customerAccountSchema = new Schema({
         firstName: {
           type: String,
           required: [true, "Customer first name is required."],
-          set: toLowerCase,
+          lowercase: true,
+          trim: true,
         },
         lastName: {
           type: String,
           required: [true, "Customer last name is required."],
-          set: toLowerCase,
+          lowercase: true,
+          trim: true,
         },
         emailAddress: {
           type: String,
@@ -63,11 +65,14 @@ const customerAccountSchema = new Schema({
             message: (props) => `${props.value} is not a valid email.`,
           },
           required: [true, "Customer email is required."],
-          set: toLowerCase,
+          lowercase: true,
+          trim: true,
         },
         phoneNumber: {
           type: String,
           required: [true, "Customer phone number is required."],
+          lowercase: true,
+          trim: true,
         },
       },
     ],
@@ -81,7 +86,8 @@ const customerAccountSchema = new Schema({
   address: {
     type: String,
     required: [true, "Account address is required."],
-    set: toLowerCase,
+    lowercase: true,
+    trim: true,
   },
   pool: {
     // <SwimmingPool>

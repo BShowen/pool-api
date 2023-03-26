@@ -5,13 +5,10 @@ const mongoose = require("mongoose");
 
 // local modules
 const apiResponse = require("../helpers/apiResponse");
-const formatErrors = require("../helpers/formatErrors");
 const verifyJwt = require("../helpers/verifyJwt");
 const authorizeRoles = require("../helpers/authorizeRoles");
 const roles = require("../helpers/roles");
 const validateReferentialIntegrity = require("../helpers/validateReferentialIntegrity");
-
-const Company = require("../models/Company");
 const CustomerAccount = require("../models/CustomerAccount");
 
 router.post("/new", [
@@ -33,9 +30,8 @@ router.post("/new", [
       await newCustomerAccount.save();
       return res.sendStatus(201);
     } catch (err) {
-      const errorList = formatErrors(err);
       res.status(400);
-      next(new Error(errorList));
+      next(err);
     }
   },
 ]);
@@ -69,8 +65,7 @@ router.get("/all", [
         .json(apiResponse({ data: { accounts: customerAccountList } }));
     } catch (error) {
       res.status(400);
-      const errorList = formatErrors(error);
-      next(new Error(errorList));
+      next(error);
     }
   },
 ]);

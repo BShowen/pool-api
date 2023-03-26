@@ -1,10 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-function toLowerCase(value) {
-  return value ? value.trim().toLowerCase() : undefined;
-}
-
 const serviceRouteSchema = new Schema({
   companyId: {
     type: mongoose.Types.ObjectId,
@@ -18,7 +14,8 @@ const serviceRouteSchema = new Schema({
   },
   day: {
     type: String, // monday, tuesday, wednesday et.
-    set: toLowerCase,
+    lowercase: true,
+    trim: true,
   },
   customerAccounts: {
     type: [

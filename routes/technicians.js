@@ -1,20 +1,16 @@
 // npm modules
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
-const async = require("async");
 
 // Local modules
 const Technician = require("../models/Technician");
-const Company = require("../models/Company");
-
 const apiResponse = require("../helpers/apiResponse");
-const formatErrors = require("../helpers/formatErrors");
 const verifyJwt = require("../helpers/verifyJwt");
 const authorizeRoles = require("../helpers/authorizeRoles");
 const roles = require("../helpers/roles");
 const validateReferentialIntegrity = require("../helpers/validateReferentialIntegrity");
+const ExtendedError = require("../helpers/ExtendedError");
 
 router.post("/new", [
   verifyJwt,
@@ -27,22 +23,6 @@ router.post("/new", [
     if (companyExists) return next();
 
     return next(new Error("Invalid token id."));
-  },
-  async (req, res, next) => {
-    /**
-     * Hash the password, if it was provided.
-     * If no password was provided then this middleware gets skipped and
-     * mongoose validation will handle the missing password.
-     */
-    if (!req.body.password) return next();
-
-    try {
-      req.body.password = await bcrypt.hash(req.body.password, 10);
-      next();
-    } catch (err) {
-      res.status(500);
-      next(new Error("Error hashing password."));
-    }
   },
   async (req, res, next) => {
     try {
@@ -77,9 +57,8 @@ router.post("/new", [
         })
       );
     } catch (err) {
-      const errorList = formatErrors(err);
       res.status(400);
-      next(new Error(errorList));
+      next(err);
     }
   },
 ]);
@@ -101,15 +80,14 @@ router.get("/all", [
       const companyId = new mongoose.Types.ObjectId(req.token.c_id);
       const technicianList = await Technician.find(
         { companyId: companyId },
-        "-_id firstName lastName"
+        "firstName lastName"
       );
       res
         .status(200)
         .json(apiResponse({ data: { technicians: technicianList } }));
     } catch (error) {
       res.status(400);
-      const errorList = formatErrors(error);
-      next(new Error(errorList));
+      next(error);
     }
   },
 ]);
@@ -127,6 +105,16 @@ router.post("/delete", [
     return next(new Error("Invalid token id."));
   },
   async (req, res, next) => {
+    if (!req.body.technicianId) {
+      // Verify that required param has been sent.
+      next(new ExtendedError("Technician id is required.", "technicianId"));
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(req.body.technicianId)) {
+      // Validate the technicianId
+      next(new ExtendedError("Invalid technician id.", "technicianId"));
+    }
+
     try {
       const techId = new mongoose.Types.ObjectId(req.body.technicianId);
       const result = await Technician.deleteOne({ _id: techId });
@@ -134,11 +122,16 @@ router.post("/delete", [
         res.sendStatus(204);
       } else {
         res.status(404);
-        next(new Error("A technician with that id could not be found."));
+        next(
+          new ExtendedError(
+            "A technician with that id could not be found.",
+            "technicianId"
+          )
+        );
       }
     } catch (error) {
       res.status(400);
-      next(new Error("Invalid technician id."));
+      next(error);
     }
   },
 ]);
@@ -156,37 +149,35 @@ router.post("/update", [
     return next(new Error("Invalid token id."));
   },
   async (req, res, next) => {
-    /**
-     * Hash the password, if it was provided.
-     * If no password was provided then this middleware gets skipped and
-     * mongoose validation will handle the missing password.
-     */
-    if (!req.body.password) return next();
-
-    try {
-      req.body.password = await bcrypt.hash(req.body.password, 10);
-      next();
-    } catch (err) {
-      res.status(500);
-      next(new Error("Error hashing password."));
+    if (!req.body.technicianId) {
+      // Verify that required param has been sent.
+      next(new ExtendedError("Technician id is required.", "technicianId"));
     }
-  },
-  async (req, res, next) => {
+
+    if (!mongoose.Types.ObjectId.isValid(req.body.technicianId)) {
+      // Validate the technicianId
+      next(new ExtendedError("Invalid technician id.", "technicianId"));
+    }
+
     try {
       const techId = new mongoose.Types.ObjectId(req.body.technicianId);
       const results = await Technician.findOneAndUpdate(
         { _id: techId },
-        req.body
+        req.body,
+        { new: true }
       );
-
-      if (!results) {
-        throw new Error("Unable to update the technician.");
+      if (results) {
+        res.status(200);
+        delete results._doc.password;
+        delete results._doc.companyId;
+        delete results._doc.__v;
+        res.json(apiResponse({ data: results }));
+      } else {
+        res.sendStatus(400);
       }
-
-      res.sendStatus(200);
     } catch (error) {
       res.status(400);
-      next(new Error("Invalid technician id."));
+      next(error);
     }
   },
 ]);

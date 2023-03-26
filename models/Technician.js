@@ -1,70 +1,65 @@
 // npm modules
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const bcrypt = require("bcrypt");
 
 // local modules
 const roles = require("../helpers/roles");
 
-function toLowerCase(value) {
-  return value.trim().toLowerCase();
-}
-
-const technicianSchema = new Schema(
-  {
-    firstName: {
-      type: String,
-      required: [true, "Technician first name is required."],
-      set: toLowerCase,
-    },
-    lastName: {
-      type: String,
-      required: [true, "Technician last name is required."],
-      set: toLowerCase,
-    },
-    emailAddress: {
-      type: String,
-      validate: {
-        validator: function (v) {
-          return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
-        },
-        message: (props) => `${props.value} is not a valid email.`,
+const technicianSchema = new Schema({
+  firstName: {
+    type: String,
+    required: [true, "Technician first name is required."],
+    lowercase: true,
+    trim: true,
+  },
+  lastName: {
+    type: String,
+    required: [true, "Technician last name is required."],
+    lowercase: true,
+    trim: true,
+  },
+  emailAddress: {
+    type: String,
+    validate: {
+      validator: function (v) {
+        return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
       },
-      required: [true, "Technician email is required."],
-      set: toLowerCase,
+      message: (props) => `${props.value} is not a valid email.`,
     },
-    password: {
-      type: String,
-      required: [true, "Technician password is required."],
-    },
-    roles: {
-      type: [String],
-      default: ["TECH"],
-      validate: {
-        validator: function (roles) {
-          return !!roles.length;
-        },
-        message: "Role is required.",
+    required: [true, "Technician email is required."],
+    lowercase: true,
+    trim: true,
+  },
+  password: {
+    type: String,
+    required: [true, "Technician password is required."],
+    trim: true,
+  },
+  roles: {
+    type: [String],
+    default: ["TECH"],
+    validate: {
+      validator: function (roles) {
+        return !!roles.length;
       },
-      enum: {
-        values: roles.all,
-        message: "{VALUE} is not a supported role.",
-      },
+      message: "Role is required.",
     },
-    companyId: {
-      type: mongoose.Types.ObjectId,
-      ref: "Company",
-      required: [true, "Technician employer is required."],
+    enum: {
+      values: roles.all,
+      message: "{VALUE} is not a supported role.",
     },
   },
-  {
-    virtuals: {
-      fullName: {
-        get() {
-          return `${this.firstName} ${this.lastName}`;
-        },
-      },
-    },
-  }
-);
+  companyId: {
+    type: mongoose.Types.ObjectId,
+    ref: "Company",
+    required: [true, "Technician employer is required."],
+  },
+});
+
+technicianSchema.pre("save", async function (next) {
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
 
 module.exports = mongoose.model("Technician", technicianSchema);

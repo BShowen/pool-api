@@ -4,14 +4,13 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 
 // local modules
-
 const Company = require("../models/Company");
 const apiResponse = require("../helpers/apiResponse");
-const formatErrors = require("../helpers/formatErrors");
 const signJwt = require("../helpers/signJwt");
 const customerAccountsRoute = require("./customerAccounts");
 const technicianRoute = require("./technicians");
 const serviceRouteRoute = require("./serviceRoutes");
+const ExtendedError = require("../helpers/ExtendedError");
 
 router.post("/signup", [
   async (req, res, next) => {
@@ -32,25 +31,6 @@ router.post("/signup", [
     }
   },
   async (req, res, next) => {
-    /**
-     * Hash the password, if it was provided.
-     * If no password was provided then this middleware gets skipped and
-     * mongoose validation will handle the missing password.
-     */
-    if (!req.body.owner.password) return next();
-
-    try {
-      req.body.owner.password = await bcrypt.hash(req.body.owner.password, 10);
-      next();
-    } catch (err) {
-      return res.status(500).json(
-        apiResponse({
-          errors: [{ message: "Error hashing password" }],
-        })
-      );
-    }
-  },
-  async (req, res, next) => {
     // Create Company and save to the DB.
     try {
       const savedCompany = await new Company(req.body).save();
@@ -62,9 +42,8 @@ router.post("/signup", [
       );
       res.status(201).json(apiResponse({ data: apiToken }));
     } catch (err) {
-      const errorList = formatErrors(err);
       res.status(400);
-      next(new Error(errorList));
+      next(err);
     }
   },
 ]);
@@ -77,17 +56,16 @@ router.post("/login", [
     const errors = [];
 
     if (email === undefined) {
-      errors.push(new Error("Email is required."));
+      errors.push(new ExtendedError("Email is required.", "email"));
     }
 
     if (password === undefined) {
-      errors.push(new Error("Password is required."));
+      errors.push(new ExtendedError("Password is required.", "password"));
     }
 
     if (errors.length) {
       res.status(400);
-      const errorList = formatErrors(errors);
-      return next(new Error(errorList));
+      return next(errors);
     }
     next();
   },
@@ -116,8 +94,7 @@ router.post("/login", [
     } catch (error) {
       // Return 401 status with error message if not matched.
       res.status(401);
-      const errorList = formatErrors(error);
-      next(new Error(errorList));
+      next(err);
     }
   },
 ]);
