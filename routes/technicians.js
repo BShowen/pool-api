@@ -151,12 +151,16 @@ router.post("/update", [
   async (req, res, next) => {
     if (!req.body.technicianId) {
       // Verify that required param has been sent.
-      next(new ExtendedError("Technician id is required.", "technicianId"));
+      res.status(400);
+      return next(
+        new ExtendedError("Technician id is required.", "technicianId")
+      );
     }
 
     if (!mongoose.Types.ObjectId.isValid(req.body.technicianId)) {
       // Validate the technicianId
-      next(new ExtendedError("Invalid technician id.", "technicianId"));
+      res.status(400);
+      return next(new ExtendedError("Invalid technician id.", "technicianId"));
     }
 
     try {
