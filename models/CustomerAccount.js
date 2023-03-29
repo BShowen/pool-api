@@ -9,27 +9,23 @@ const customerAccountSchema = new Schema({
     lowercase: true,
     trim: true,
   },
-  service: {
-    type: {
-      type: String, //Full service
-      required: false,
-      lowercase: true,
-      trim: true,
-      default: "full service",
-    },
-    day: {
-      type: String, //monday, tuesday, etc.
-      required: false,
-      lowercase: true,
-      trim: true,
-    },
-    frequency: {
-      type: String, //weekly, bi-weekly, etc.
-      required: true,
-      lowercase: true,
-      trim: true,
-      default: "weekly",
-    },
+  serviceType: {
+    type: String, //Full service
+    required: [true, "Service type is required."],
+    lowercase: true,
+    trim: true,
+  },
+  serviceDay: {
+    type: String, //monday, tuesday, etc.
+    required: [true, "Service day is required."],
+    lowercase: true,
+    trim: true,
+  },
+  serviceFrequency: {
+    type: String, //weekly, bi-weekly, etc.
+    required: [true, "Service frequency is required."],
+    lowercase: true,
+    trim: true,
   },
   price: {
     type: Number,
