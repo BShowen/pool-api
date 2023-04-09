@@ -77,7 +77,7 @@ router.post("/login", [
       // Retrieve just the email and password for the company owner.
       const company = await Company.findOne({ email });
       if (!company) {
-        throw new Error("Invalid email.");
+        throw new ExtendedError("Invalid email.", "email");
       }
 
       // Compare passwords.
@@ -87,14 +87,14 @@ router.post("/login", [
           { c_id: company._id, roles: company.owner.roles },
           { expiresIn: process.env.JWT_MAX_AGE }
         );
-        res.status(200).json(apiResponse({ data: apiToken }));
+        res.status(200).json(apiResponse({ data: { token: apiToken } }));
       } else {
-        throw new Error("Invalid password.");
+        throw new ExtendedError("Invalid password.", "password");
       }
     } catch (error) {
       // Return 401 status with error message if not matched.
       res.status(401);
-      next(err);
+      next(error);
     }
   },
 ]);
