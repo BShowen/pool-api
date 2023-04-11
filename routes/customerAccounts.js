@@ -27,6 +27,7 @@ router.post("/new", [
   async (req, res, next) => {
     try {
       req.body.companyId = req.token.c_id;
+      req.body.accountOwners = JSON.parse(req.body.accountOwners || "[]");
       const newCustomerAccount = new CustomerAccount(req.body);
       await newCustomerAccount.save();
       res.status(201);
