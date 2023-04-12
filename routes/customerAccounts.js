@@ -73,6 +73,30 @@ router.get("/all", [
   },
 ]);
 
+router.get("/:id", [
+  verifyJwt,
+  authorizeRoles(roles.TECH),
+  async (req, res, next) => {
+    try {
+      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
+      const customerId = new mongoose.Types.ObjectId(req.params.id);
+      const customerAccount = await CustomerAccount.findOne(
+        { companyId: companyId, _id: customerId },
+        "-password"
+      );
+      if (!customerAccount) {
+        throw new Error("Cannot find that customer.");
+      }
+      res
+        .status(200)
+        .json(apiResponse({ data: { customer: customerAccount } }));
+    } catch (error) {
+      res.status(400);
+      next(error);
+    }
+  },
+]);
+
 router.post("/updateAccount", [
   verifyJwt,
   authorizeRoles(roles.MANAGER),
@@ -95,6 +119,9 @@ router.post("/updateAccount", [
         );
       }
 
+      req.body.accountOwners = JSON.parse(req.body.accountOwners);
+      req.body.poolReports = JSON.parse(req.body.poolReports);
+
       const results = await CustomerAccount.findOneAndUpdate(
         {
           _id: req.body.customerAccountId,
@@ -105,7 +132,7 @@ router.post("/updateAccount", [
       );
       res.json(apiResponse({ data: results }));
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
       res.status(400);
       next(error);
     }
@@ -145,6 +172,7 @@ router.post("/delete", [
         throw new ExtendedError("That account couldn't be deleted.");
       }
     } catch (error) {
+      console.log(error.message);
       res.status(400);
       next(error);
     }
