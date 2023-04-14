@@ -92,6 +92,30 @@ router.get("/all", [
   },
 ]);
 
+router.get("/:id", [
+  verifyJwt,
+  authorizeRoles(roles.TECH),
+  async (req, res, next) => {
+    try {
+      const companyId = new mongoose.Types.ObjectId(req.token.c_id);
+      const technicianId = new mongoose.Types.ObjectId(req.params.id);
+      const technicianAccount = await Technician.findOne(
+        { companyId: companyId, _id: technicianId },
+        "-password"
+      );
+      if (!technicianAccount) {
+        throw new Error("Cannot find that customer.");
+      }
+      res
+        .status(200)
+        .json(apiResponse({ data: { technician: technicianAccount } }));
+    } catch (error) {
+      res.status(400);
+      next(error);
+    }
+  },
+]);
+
 router.post("/delete", [
   verifyJwt,
   authorizeRoles(roles.ADMIN),
