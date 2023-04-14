@@ -30,7 +30,10 @@ router.post("/new", [
         emailAddress: req.body.emailAddress,
       });
       if (alreadyExists) {
-        throw new Error("A technician with that email already exists.");
+        throw new ExtendedError(
+          "A technician with that email already exists.",
+          "emailAddress"
+        );
       }
 
       /*-------------------------------------------------*/

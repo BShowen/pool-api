@@ -9,13 +9,13 @@ const roles = require("../helpers/roles");
 const technicianSchema = new Schema({
   firstName: {
     type: String,
-    required: [true, "Technician first name is required."],
+    required: [true, "First name is required."],
     lowercase: true,
     trim: true,
   },
   lastName: {
     type: String,
-    required: [true, "Technician last name is required."],
+    required: [true, "Last name is required."],
     lowercase: true,
     trim: true,
   },
@@ -27,13 +27,13 @@ const technicianSchema = new Schema({
       },
       message: (props) => `${props.value} is not a valid email.`,
     },
-    required: [true, "Technician email is required."],
+    required: [true, "Email is required."],
     lowercase: true,
     trim: true,
   },
   password: {
     type: String,
-    required: [true, "Technician password is required."],
+    required: [true, "Password is required."],
     trim: true,
   },
   roles: {
