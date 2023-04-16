@@ -54,18 +54,16 @@ router.get("/all", [
   async (req, res, next) => {
     try {
       const companyId = new mongoose.Types.ObjectId(req.token.c_id);
-      const customerAccountList = await CustomerAccount.find(
+      const accountList = await CustomerAccount.find(
         { companyId: companyId },
         "accountName"
       );
-      if (!customerAccountList) {
+      if (!accountList) {
         // The company isn't in the DB. This can happen when a company is
         // deleted and then the apiToken same is still used.
         throw new Error("Cannot find that company.");
       }
-      res
-        .status(200)
-        .json(apiResponse({ data: { accounts: customerAccountList } }));
+      res.status(200).json(apiResponse({ data: { accountList } }));
     } catch (error) {
       res.status(400);
       next(error);
