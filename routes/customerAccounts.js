@@ -55,8 +55,8 @@ router.get("/all", [
     try {
       const companyId = new mongoose.Types.ObjectId(req.token.c_id);
       const accountList = await CustomerAccount.find(
-        { companyId: companyId },
-        "accountName"
+        { companyId: companyId }
+        // "accountName"
       );
       if (!accountList) {
         // The company isn't in the DB. This can happen when a company is

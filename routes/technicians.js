@@ -83,11 +83,9 @@ router.get("/all", [
       const companyId = new mongoose.Types.ObjectId(req.token.c_id);
       const technicianList = await Technician.find(
         { companyId: companyId },
-        "firstName lastName"
+        "-password"
       );
-      res
-        .status(200)
-        .json(apiResponse({ data: { technicians: technicianList } }));
+      res.status(200).json(apiResponse({ data: { technicianList } }));
     } catch (error) {
       res.status(400);
       next(error);
