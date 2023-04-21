@@ -31,7 +31,7 @@ router.post("/new", [
       });
       if (alreadyExists) {
         throw new ExtendedError(
-          "A technician with that email already exists.",
+          `A technician with \"${req.body.emailAddress}\" already exists.`,
           "emailAddress"
         );
       }
@@ -205,6 +205,7 @@ router.post("/update", [
         res.sendStatus(400);
       }
     } catch (error) {
+      console.log(error);
       res.status(400);
       next(error);
     }
