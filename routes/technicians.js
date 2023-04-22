@@ -11,6 +11,7 @@ const authorizeRoles = require("../helpers/authorizeRoles");
 const roles = require("../helpers/roles");
 const validateReferentialIntegrity = require("../helpers/validateReferentialIntegrity");
 const ExtendedError = require("../helpers/ExtendedError");
+const { sendTechnicianSignupEmail } = require("../helpers/courier");
 
 router.post("/new", [
   verifyJwt,
@@ -36,18 +37,19 @@ router.post("/new", [
         );
       }
 
-      /*-------------------------------------------------*/
-      const companyExists = await validateReferentialIntegrity(
-        req.token.c_id,
-        "Company"
-      );
-      if (!companyExists) {
-        delete req.body.companyId;
-      }
-      /*-------------------------------------------------*/
       req.body.companyId = req.token.c_id;
+      req.body.registrationSecret = new mongoose.Types.ObjectId();
+
       const newTechnician = new Technician(req.body);
       await newTechnician.save();
+      // Send email confirmation
+      req.body.registrationUrl += `?q=${newTechnician._id}-${newTechnician.registrationSecret}`;
+      const requestId = await sendTechnicianSignupEmail({
+        technician: req.body,
+        companyEmail: req.token.c_email,
+      });
+
+      // Then return res.status....
       return res.status(201).json(
         apiResponse({
           data: {
@@ -56,6 +58,7 @@ router.post("/new", [
               firstName: newTechnician.firstName,
               lastName: newTechnician.lastName,
             },
+            confirmationEmail: requestId,
           },
         })
       );
@@ -211,5 +214,55 @@ router.post("/update", [
     }
   },
 ]);
+
+router.post("/get-technician-for-registration", async (req, res, next) => {
+  try {
+    let { technicianId, registrationSecret } = req.body;
+    technicianId = new mongoose.Types.ObjectId(technicianId);
+    const technicianAccount = await Technician.findOne(
+      { _id: technicianId, registrationSecret },
+      "-password"
+    );
+    if (!technicianAccount) {
+      throw new Error("Invalid registration link.");
+    }
+    res
+      .status(200)
+      .json(apiResponse({ data: { technician: technicianAccount } }));
+  } catch (error) {
+    res.status(400);
+    next(error);
+  }
+});
+
+router.post("/confirm-technician-registration", async (req, res, next) => {
+  try {
+    let { technicianId, registrationSecret, firstName, lastName, password } =
+      req.body;
+    technicianId = new mongoose.Types.ObjectId(technicianId);
+    const technician = await Technician.findOne({
+      _id: technicianId,
+      registrationSecret,
+    });
+    if (!technician) {
+      throw new Error("Technician could not be found.");
+    }
+
+    await technician
+      .set({
+        firstName,
+        lastName,
+        password,
+        registrationSecret: undefined,
+      })
+      .save();
+
+    res.sendStatus(204);
+  } catch (error) {
+    console.log(error);
+    res.status(400);
+    next(error);
+  }
+});
 
 module.exports = router;

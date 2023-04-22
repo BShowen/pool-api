@@ -33,7 +33,6 @@ const technicianSchema = new Schema({
   },
   password: {
     type: String,
-    required: [true, "Password is required."],
     trim: true,
   },
   roles: {
@@ -55,10 +54,15 @@ const technicianSchema = new Schema({
     ref: "Company",
     required: [true, "Technician employer is required."],
   },
+  registrationSecret: {
+    type: String,
+  },
 });
 
 technicianSchema.pre("save", async function (next) {
-  this.password = await bcrypt.hash(this.password, 10);
+  if (this.password) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
   next();
 });
 

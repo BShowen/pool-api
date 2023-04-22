@@ -13,6 +13,7 @@
     "ext": "js json"
   },
   "dependencies": {
+    "@trycourier/courier": "^4.2.0",
     "bcrypt": "^5.1.0",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",

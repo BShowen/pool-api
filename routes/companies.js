@@ -35,7 +35,11 @@ router.post("/signup", [
     try {
       const savedCompany = await new Company(req.body).save();
       const apiToken = signJwt(
-        { c_id: savedCompany._id, roles: savedCompany.owner.roles },
+        {
+          c_id: savedCompany._id,
+          roles: savedCompany.owner.roles,
+          c_email: savedCompany.email,
+        },
         {
           expiresIn: process.env.JWT_MAX_AGE,
         }
@@ -84,7 +88,7 @@ router.post("/login", [
       if (bcrypt.compareSync(password, company.owner.password)) {
         // Return 200 status with api key if matched
         const apiToken = signJwt(
-          { c_id: company._id, roles: company.owner.roles },
+          { c_id: company._id, roles: company.owner.roles, c_email: email },
           { expiresIn: process.env.JWT_MAX_AGE }
         );
         res.status(200).json(apiResponse({ data: { token: apiToken } }));
