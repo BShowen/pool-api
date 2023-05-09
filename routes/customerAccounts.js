@@ -57,7 +57,10 @@ router.get("/all", [
       const accountList = await CustomerAccount.find(
         { companyId: companyId }
         // "accountName"
-      );
+      ).populate({
+        path: "technicianId",
+        select: "firstName lastName",
+      });
       if (!accountList) {
         // The company isn't in the DB. This can happen when a company is
         // deleted and then the apiToken same is still used.
@@ -117,8 +120,13 @@ router.post("/updateAccount", [
         );
       }
 
-      req.body.accountOwners = JSON.parse(req.body.accountOwners);
-      req.body.poolReports = JSON.parse(req.body.poolReports);
+      req.body.accountOwners = req.body?.accountOwners
+        ? JSON.parse(req.body.accountOwners)
+        : undefined;
+
+      req.body.poolReports = req.body?.accountOwners
+        ? JSON.parse(req.body.poolReports)
+        : undefined;
 
       const results = await CustomerAccount.findOneAndUpdate(
         {
