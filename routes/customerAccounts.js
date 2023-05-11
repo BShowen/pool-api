@@ -57,10 +57,7 @@ router.get("/all", [
       const accountList = await CustomerAccount.find(
         { companyId: companyId }
         // "accountName"
-      ).populate({
-        path: "technicianId",
-        select: "firstName lastName",
-      });
+      );
       if (!accountList) {
         // The company isn't in the DB. This can happen when a company is
         // deleted and then the apiToken same is still used.
