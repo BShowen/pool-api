@@ -128,12 +128,21 @@ router.post("/updateAccount", [
         ? JSON.parse(req.body.poolReports)
         : undefined;
 
+      const updateQuery =
+        Number.parseInt(req.body.technicianId) === 0
+          ? {
+              ...req.body,
+              technicianId: undefined,
+              $unset: { technicianId: 1 },
+            }
+          : { ...req.body };
+
       const results = await CustomerAccount.findOneAndUpdate(
         {
           _id: req.body.customerAccountId,
           companyId: req.token.c_id,
         },
-        { ...req.body },
+        updateQuery,
         { new: true, runValidators: true }
       );
       res.json(apiResponse({ data: results }));
