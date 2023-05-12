@@ -107,6 +107,6 @@ router.use("/customer-accounts", customerAccountsRoute);
 
 router.use("/technicians", technicianRoute);
 
-router.use("/routes", serviceRouteRoute);
+router.use("/service-routes", serviceRouteRoute);
 
 module.exports = router;
