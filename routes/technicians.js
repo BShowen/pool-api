@@ -87,7 +87,8 @@ router.get("/all", [
       const technicianList = await Technician.find(
         { companyId: companyId },
         "-password"
-      );
+      ).sort("firstName");
+      console.log(technicianList);
       res.status(200).json(apiResponse({ data: { technicianList } }));
     } catch (error) {
       res.status(400);

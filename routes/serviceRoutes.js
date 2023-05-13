@@ -69,6 +69,7 @@ router.get("/all", [
             count: 1,
           },
         },
+        { $sort: { "technician.firstName": 1 } },
       ]);
       return res.status(200).json(apiResponse({ data: { routes } }));
     } catch (error) {
