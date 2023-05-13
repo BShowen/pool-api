@@ -88,7 +88,6 @@ router.get("/all", [
         { companyId: companyId },
         "-password"
       ).sort("firstName");
-      console.log(technicianList);
       res.status(200).json(apiResponse({ data: { technicianList } }));
     } catch (error) {
       res.status(400);
