@@ -1,0 +1,25 @@
+{
+  "name": "pool-api",
+  "version": "1.0.0",
+  "description": "GrapQL backend for the pool app.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "Bradley Showen",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@apollo/server": "^4.7.1",
+    "bcrypt": "^5.1.0",
+    "dotenv": "^16.0.3",
+    "graphql": "^16.6.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.1.1",
+    "nodemon": "^2.0.22"
+  },
+  "nodemonConfig": {
+    "ext": "js json"
+  }
+}
