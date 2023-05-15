@@ -1,10 +1,10 @@
 // npm modules
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
-const bcrypt = require("bcrypt");
+import bcrypt from "bcrypt";
 
 // local modules
-const roles = require("../helpers/roles");
+import roles from "../utils/roles.js";
 
 const companySchema = new Schema({
   owner: {
@@ -83,4 +83,4 @@ companySchema.pre("save", async function (next) {
   next();
 });
 
-module.exports = mongoose.model("Company", companySchema);
+export default mongoose.model("Company", companySchema);

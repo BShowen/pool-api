@@ -5,10 +5,12 @@ import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import mongoose from "mongoose";
 
-import resolvers from "./resolvers.js";
-import typeDefs from "./typeDefs.js";
+import getUserFromToken from "./utils/getUserFromToken.js";
+import resolvers from "./resolvers/resolvers.js";
+import typeDefs from "./schema/typeDefs.js";
 import CustomerAccount from "./models/CustomerAccount.js";
 import Technician from "./models/Technician.js";
+import Company from "./models/Company.js";
 
 mongoose.connect(process.env.DB_STRING);
 const db = mongoose.connection;
@@ -24,12 +26,14 @@ const server = new ApolloServer({
 
 const { url } = await startStandaloneServer(server, {
   listen: { port: process.env.PORT },
-  context: async () => {
+  context: async ({ req }) => {
     return {
       models: {
         CustomerAccount,
         Technician,
+        Company,
       },
+      user: getUserFromToken({ req }),
     };
   },
 });
