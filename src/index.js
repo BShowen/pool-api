@@ -2,7 +2,12 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ApolloServer } from "@apollo/server";
-import { startStandaloneServer } from "@apollo/server/standalone";
+import { expressMiddleware } from "@apollo/server/express4";
+import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import express from "express";
+import cors from "cors";
+import http from "http";
+import bodyParser from "body-parser";
 import mongoose from "mongoose";
 
 import getUserFromToken from "./utils/getUserFromToken.js";
@@ -19,23 +24,51 @@ db.once("open", async () => {
   console.log("Connected to MongoDB");
 });
 
+const app = express();
+const httpServer = http.createServer(app);
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
+await server.start();
 
-const { url } = await startStandaloneServer(server, {
-  listen: { port: process.env.PORT },
-  context: async ({ req }) => {
-    return {
-      models: {
-        CustomerAccount,
-        Technician,
-        Company,
-      },
-      user: getUserFromToken({ req }),
-    };
+const corsOptions = {
+  origin: function (origin, cb) {
+    // Allow any origin in development
+    const originAllowed =
+      process.env.NODE_ENV === "development" ||
+      process.env.ALLOWED_ORIGIN === origin;
+
+    if (originAllowed) {
+      return cb(null, true);
+    } else {
+      return cb(new Error("Origin not allowed"));
+    }
   },
-});
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-console.log(`🚀  Server ready at: ${url}`);
+app.use(
+  "/",
+  cors(corsOptions),
+  bodyParser.json({ limit: "50mb" }),
+  expressMiddleware(server, {
+    context: async ({ req }) => {
+      return {
+        models: {
+          CustomerAccount,
+          Technician,
+          Company,
+        },
+        user: getUserFromToken({ req }),
+      };
+    },
+  })
+);
+
+await new Promise((resolve) =>
+  httpServer.listen({ port: process.env.PORT }, resolve)
+);
+
+console.log(`🚀 Server ready at http://localhost:${process.env.PORT}/`);
