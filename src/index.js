@@ -9,13 +9,15 @@ import cors from "cors";
 import http from "http";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
+import { makeExecutableSchema } from "@graphql-tools/schema";
 
 import getUserFromToken from "./utils/getUserFromToken.js";
-import resolvers from "./resolvers/resolvers.js";
-import typeDefs from "./schema/typeDefs.js";
-import CustomerAccount from "./models/CustomerAccount.js";
-import Technician from "./models/Technician.js";
-import Company from "./models/Company.js";
+import resolvers from "./resolvers/index.js";
+import typeDefs from "./typeDefs/index.js";
+
+import CustomerAccount from "./models/CustomerAccount/CustomerAccount.js";
+import Technician from "./models/Technician/Technician.js";
+import Company from "./models/Company/Company.js";
 
 mongoose.connect(process.env.DB_STRING);
 const db = mongoose.connection;
@@ -24,11 +26,11 @@ db.once("open", async () => {
   console.log("Connected to MongoDB");
 });
 
+const schema = makeExecutableSchema({ typeDefs, resolvers });
 const app = express();
 const httpServer = http.createServer(app);
 const server = new ApolloServer({
-  typeDefs,
-  resolvers,
+  schema,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 await server.start();

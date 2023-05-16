@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import { mongoose } from "mongoose";
 const Schema = mongoose.Schema;
 
 const serviceRouteSchema = new Schema({
@@ -27,4 +27,4 @@ const serviceRouteSchema = new Schema({
   },
 });
 
-module.exports = mongoose.model("ServiceRoute", serviceRouteSchema);
+export default mongoose.model("ServiceRoute", serviceRouteSchema);

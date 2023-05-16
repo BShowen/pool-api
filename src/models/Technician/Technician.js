@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 import bcrypt from "bcrypt";
 
 // local modules
-import roles from "../utils/roles.js";
+import roles from "../../utils/roles.js";
 
 const technicianSchema = new Schema({
   firstName: {

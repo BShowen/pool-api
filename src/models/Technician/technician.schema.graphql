@@ -1,0 +1,14 @@
+type Technician {
+  firstName: String
+  lastName: String
+  emailAddress: String
+  id: ID
+  password: String
+  companyId: ID
+  registrationSecret: String
+}
+
+type Query {
+  "Get a list of technicians"
+  technicianList: [Technician]!
+}

@@ -1,11 +1,12 @@
-export default async (parent, args, context, info) => {
-  const { user } = context;
-  user.authenticateAndAuthorize({ role: "MANAGER" });
-  const results = await context.models.CustomerAccount.find();
-  return results;
-};
-
-export const fieldResolvers = {
+export default {
+  Query: {
+    customerAccountList: async (parent, args, context, info) => {
+      const { user } = context;
+      user.authenticateAndAuthorize({ role: "MANAGER" });
+      const results = await context.models.CustomerAccount.find();
+      return results;
+    },
+  },
   CustomerAccount: {
     technician: async (parent, args, context, info) => {
       if (!parent.technicianId) {

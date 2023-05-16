@@ -1,0 +1,24 @@
+type AccountOwner {
+  firstName: String
+  lastName: String
+  emailAddress: String
+  phoneNumber: String
+}
+
+type CustomerAccount {
+  accountName: String
+  serviceType: String
+  serviceDay: String
+  serviceFrequency: String
+  address: String
+  price: Int
+  companyId: ID
+  id: ID
+  technician: Technician
+  accountOwners: [AccountOwner]!
+}
+
+type Query {
+  "Get a list of customers"
+  customerAccountList: [CustomerAccount]!
+}
