@@ -17,6 +17,7 @@
     "@graphql-tools/load-files": "^6.6.1",
     "@graphql-tools/merge": "^8.4.2",
     "@graphql-tools/schema": "^9.0.19",
+    "@trycourier/courier": "^4.2.0",
     "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",

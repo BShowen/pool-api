@@ -3,5 +3,5 @@ export default {
   MANAGER: ["MANAGER", "TECH", "CUSTOMER"],
   TECH: ["TECH", "CUSTOMER"],
   CUSTOMER: ["CUSTOMER"],
-  // ALL: ["ADMIN", "MANAGER", "TECH", "CUSTOMER"],
+  ALL: ["ADMIN", "MANAGER", "TECH", "CUSTOMER"],
 };

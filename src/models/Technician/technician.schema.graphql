@@ -12,3 +12,14 @@ type Query {
   "Get a list of technicians"
   technicianList: [Technician]!
 }
+
+input CreateTechnicianInput {
+  firstName: String!
+  lastName: String!
+  emailAddress: String!
+}
+
+type Mutation {
+  "Create a new technician"
+  createNewTechnician(technician: CreateTechnicianInput): Technician!
+}
