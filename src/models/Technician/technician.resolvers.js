@@ -11,6 +11,13 @@ export default {
       const results = await context.models.Technician.find();
       return results;
     },
+    technician: async (_, { id }, { models, user }) => {
+      user.authenticateAndAuthorize({ role: "MANAGER" });
+      const technician = await models.Technician.findById(
+        new mongoose.Types.ObjectId(id)
+      );
+      return technician;
+    },
   },
   Mutation: {
     createNewTechnician: async (parent, args, context, info) => {
