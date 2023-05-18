@@ -27,5 +27,28 @@ export default {
         throw new GraphQLError("Invalid password.");
       }
     },
+    signUp: async (parent, { signUpInput }, context, info) => {
+      // Check to make sure company doesn't already exist.
+      const company = await context.models.Company.findOne({
+        email: signUpInput.email,
+      });
+      if (!!company) {
+        throw new GraphQLError("That company email is already in use.");
+      }
+
+      // Create Company and save to the DB.
+      const savedCompany = await new context.models.Company(signUpInput).save();
+      const apiToken = signJwt(
+        {
+          c_id: savedCompany._id,
+          roles: savedCompany.owner.roles,
+          c_email: savedCompany.email,
+        },
+        {
+          expiresIn: process.env.JWT_MAX_AGE,
+        }
+      );
+      return apiToken;
+    },
   },
 };

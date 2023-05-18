@@ -68,14 +68,6 @@ const companySchema = new Schema({
     lowercase: true,
     trim: true,
   },
-  accounts: {
-    type: [
-      {
-        type: mongoose.Types.ObjectId,
-        ref: "CustomerAccount",
-      },
-    ],
-  },
 });
 
 companySchema.pre("save", async function (next) {
