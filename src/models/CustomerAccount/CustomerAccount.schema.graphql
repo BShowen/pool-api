@@ -22,3 +22,27 @@ type Query {
   "Get a list of customers"
   customerAccountList: [CustomerAccount]!
 }
+
+input AccountOwnerInput {
+  firstName: String
+  lastName: String
+  emailAddress: String
+  phoneNumber: String
+}
+
+input customerAccountInput {
+  accountName: String
+  serviceType: String
+  serviceDay: String
+  serviceFrequency: String
+  address: String
+  price: Int
+  accountOwners: [AccountOwnerInput!]!
+}
+
+type Mutation {
+  "Create a new customer account"
+  createNewCustomerAccount(
+    customerAccountInput: customerAccountInput
+  ): CustomerAccount
+}
