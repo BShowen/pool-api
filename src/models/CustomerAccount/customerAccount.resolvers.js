@@ -4,7 +4,7 @@ export default {
   Query: {
     customerAccountList: async (parent, args, context, info) => {
       const { user } = context;
-      user.authenticateAndAuthorize({ role: "MANAGER" });
+      user.authenticateAndAuthorize({ role: "TECH" });
       const results = await context.models.CustomerAccount.find();
       return results;
     },
@@ -67,6 +67,26 @@ export default {
       } else {
         return false;
       }
+    },
+    updateCustomerAccount: async (parent, args, { user, models }, info) => {
+      user.authenticateAndAuthorize({ role: "MANAGER" });
+      const { customerAccountInput } = args;
+      const { CustomerAccount } = models;
+      if (!mongoose.Types.ObjectId.isValid(customerAccountInput.id)) {
+        // Make sure provided account id is valid mongoose id.
+        throw new GraphQLError("Invalid customer account id.");
+      }
+
+      // Retrieve the account from the DB.
+      const customerAccount = await CustomerAccount.findOne({
+        companyId: user.c_id,
+        _id: customerAccountInput.id,
+      });
+      // Update the document
+      customerAccount.set(customerAccountInput);
+      // Save and return the document
+      const savedCustomerAccount = await customerAccount.save();
+      return savedCustomerAccount;
     },
   },
   CustomerAccount: {

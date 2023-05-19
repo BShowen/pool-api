@@ -25,7 +25,7 @@ input AccountOwnerInput {
   phoneNumber: String
 }
 
-input customerAccountInput {
+input CustomerAccountInput {
   accountName: String
   serviceType: String
   serviceDay: String
@@ -33,6 +33,26 @@ input customerAccountInput {
   address: String
   price: Int
   accountOwners: [AccountOwnerInput!]!
+  id: ID
+}
+
+input UpdateAccountOwnerInput {
+  firstName: String!
+  lastName: String!
+  emailAddress: String!
+  phoneNumber: String!
+}
+
+input UpdateCustomerAccountInput {
+  accountName: String
+  serviceType: String
+  serviceDay: String
+  serviceFrequency: String
+  address: String
+  price: Int
+  accountOwners: [UpdateAccountOwnerInput!]!
+  id: ID!
+  technicianId: ID
 }
 
 type Query {
@@ -45,8 +65,12 @@ type Query {
 type Mutation {
   "Create a new customer account"
   createNewCustomerAccount(
-    customerAccountInput: customerAccountInput
+    customerAccountInput: CustomerAccountInput
   ): CustomerAccount
   "Delete a customer account"
   deleteCustomerAccount(id: ID): Boolean!
+  "Update a customer account"
+  updateCustomerAccount(
+    customerAccountInput: UpdateCustomerAccountInput
+  ): CustomerAccount
 }
