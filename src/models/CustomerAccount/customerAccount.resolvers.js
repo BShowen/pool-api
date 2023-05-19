@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import { GraphQLError } from "graphql";
 export default {
   Query: {
     customerAccountList: async (parent, args, context, info) => {
@@ -47,6 +47,26 @@ export default {
       const newCustomerAccount = new CustomerAccount(customerAccountInput);
       const savedCustomerAccount = await newCustomerAccount.save();
       return savedCustomerAccount;
+    },
+    deleteCustomerAccount: async (parent, { id }, { user, models }, info) => {
+      user.authenticateAndAuthorize({ role: "MANAGER" });
+      const { CustomerAccount } = models;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        // Make sure provided account id is valid mongoose id.
+        throw new GraphQLError("Invalid customer account id.");
+      }
+
+      const { deletedCount } = await CustomerAccount.deleteOne({
+        _id: id,
+        companyId: user.c_id,
+      });
+
+      if (deletedCount) {
+        return true;
+      } else {
+        return false;
+      }
     },
   },
   CustomerAccount: {
