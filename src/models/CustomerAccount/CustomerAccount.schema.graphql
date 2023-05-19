@@ -21,6 +21,8 @@ type CustomerAccount {
 type Query {
   "Get a list of customers"
   customerAccountList: [CustomerAccount]!
+  "Get a customer by id"
+  customerAccount(id: ID): CustomerAccount
 }
 
 input AccountOwnerInput {
