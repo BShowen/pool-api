@@ -5,7 +5,16 @@ type ServiceRoute {
   technician: Technician
 }
 
+type ServiceRouteGrouped {
+  serviceDay: String
+  customers: [CustomerAccount]!
+  total: Int
+  count: Int
+}
+
 type Query {
   "Get a list of service routes"
-  serviceRouteList: [ServiceRoute]!
+  getServiceRouteList: [ServiceRoute]!
+  "Get service route for a technician. Customer accounts grouped by service day"
+  getGroupedServiceRoute(id: ID): [ServiceRouteGrouped]!
 }
