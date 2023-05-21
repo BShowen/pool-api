@@ -13,9 +13,10 @@ export default {
     },
     technician: async (_, { id }, { models, user }) => {
       user.authenticateAndAuthorize({ role: "MANAGER" });
-      const technician = await models.Technician.findById(
-        new mongoose.Types.ObjectId(id)
-      );
+      const technician = await models.Technician.findOne({
+        companyId: user.c_id,
+        _id: id,
+      });
       return technician || null;
     },
   },
