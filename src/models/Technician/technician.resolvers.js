@@ -16,7 +16,7 @@ export default {
       const technician = await models.Technician.findById(
         new mongoose.Types.ObjectId(id)
       );
-      return technician;
+      return technician || null;
     },
   },
   Mutation: {
@@ -31,8 +31,11 @@ export default {
           `A technician with "${technician.emailAddress}" already exists.`
         );
       }
+      // Associate the technician to the currently logged in company account
       technician.companyId = context.user.c_id;
+      // Create the technician registration secret.
       technician.registrationSecret = new mongoose.Types.ObjectId();
+      // Create and save the new technician.
       const newTechnician = new context.models.Technician(technician);
       await newTechnician.save();
       // Send email confirmation
@@ -42,6 +45,26 @@ export default {
         companyEmail: context.user.c_email,
       });
       return newTechnician;
+    },
+    deleteTechnician: async (parent, { technicianId }, context, info) => {
+      const { user } = context;
+      user.authenticateAndAuthorize({ role: "ADMIN" });
+
+      // Validate the technicianId
+      if (!mongoose.Types.ObjectId.isValid(technicianId)) {
+        throw new GraphQLError("Invalid technician id.");
+      }
+
+      // Cast technicianId into mongoose ObjectId
+      const techId = new mongoose.Types.ObjectId(technicianId);
+      // Run the deletion query.
+      const result = await context.models.Technician.deleteOne({ _id: techId });
+
+      if (result.deletedCount > 0) {
+        return true;
+      } else {
+        throw new GraphQLError("A technician with that id could not be found.");
+      }
     },
   },
 };

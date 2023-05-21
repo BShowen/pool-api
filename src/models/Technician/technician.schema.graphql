@@ -23,5 +23,7 @@ input CreateTechnicianInput {
 
 type Mutation {
   "Create a new technician"
-  createNewTechnician(technician: CreateTechnicianInput): Technician!
+  createNewTechnician(technician: CreateTechnicianInput!): Technician!
+  "Delete a technician"
+  deleteTechnician(technicianId: ID!): Boolean!
 }
