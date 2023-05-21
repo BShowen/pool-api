@@ -66,5 +66,22 @@ export default {
         throw new GraphQLError("A technician with that id could not be found.");
       }
     },
+    updateTechnician: async (parent, args, context, info) => {
+      const { updateTechnicianInput } = args;
+      const { user, models } = context;
+
+      user.authenticateAndAuthorize({ role: "TECH" });
+
+      const technician = await models.Technician.findOne({
+        companyId: user.c_id,
+        _id: updateTechnicianInput.id,
+      });
+
+      technician.set(updateTechnicianInput);
+
+      const savedTechnician = await technician.save();
+
+      return savedTechnician;
+    },
   },
 };

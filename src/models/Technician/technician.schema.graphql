@@ -21,9 +21,18 @@ input CreateTechnicianInput {
   emailAddress: String!
 }
 
+input updateTechnicianInput {
+  firstName: String
+  lastName: String
+  emailAddress: String
+  id: ID!
+}
+
 type Mutation {
   "Create a new technician"
   createNewTechnician(technician: CreateTechnicianInput!): Technician!
   "Delete a technician"
   deleteTechnician(technicianId: ID!): Boolean!
+  "Update a technician"
+  updateTechnician(updateTechnicianInput: updateTechnicianInput!): Technician!
 }
