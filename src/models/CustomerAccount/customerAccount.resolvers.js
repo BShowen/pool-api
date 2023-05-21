@@ -2,13 +2,13 @@ import mongoose from "mongoose";
 import { GraphQLError } from "graphql";
 export default {
   Query: {
-    customerAccountList: async (parent, args, context, info) => {
+    getCustomerAccountList: async (parent, args, context, info) => {
       const { user } = context;
       user.authenticateAndAuthorize({ role: "TECH" });
       const results = await context.models.CustomerAccount.find();
       return results;
     },
-    customerAccount: async (paren, { id }, { user, models }, info) => {
+    getCustomerAccount: async (paren, { id }, { user, models }, info) => {
       user.authenticateAndAuthorize({ role: "TECH" });
       const { CustomerAccount } = models;
       const companyId = new mongoose.Types.ObjectId(user.c_id);

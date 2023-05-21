@@ -57,9 +57,9 @@ input UpdateCustomerAccountInput {
 
 type Query {
   "Get a list of customers"
-  customerAccountList: [CustomerAccount]!
+  getCustomerAccountList: [CustomerAccount]!
   "Get a customer by id"
-  customerAccount(id: ID): CustomerAccount
+  getCustomerAccount(id: ID): CustomerAccount
 }
 
 type Mutation {
