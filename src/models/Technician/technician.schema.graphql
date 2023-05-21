@@ -10,9 +10,9 @@ type Technician {
 
 type Query {
   "Get a list of technicians"
-  technicianList: [Technician]!
+  getTechnicianList: [Technician]!
   "Get a single technician by id"
-  technician(id: ID): Technician
+  getTechnician(id: ID): Technician
 }
 
 input CreateTechnicianInput {

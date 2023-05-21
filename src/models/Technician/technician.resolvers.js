@@ -5,13 +5,13 @@ import sendTechnicianSignupEmail from "../../utils/courier.js";
 
 export default {
   Query: {
-    technicianList: async (parent, args, context, info) => {
+    getTechnicianList: async (parent, args, context, info) => {
       const { user } = context;
       user.authenticateAndAuthorize({ role: "MANAGER" });
       const results = await context.models.Technician.find();
       return results;
     },
-    technician: async (_, { id }, { models, user }) => {
+    getTechnician: async (_, { id }, { models, user }) => {
       user.authenticateAndAuthorize({ role: "MANAGER" });
       const technician = await models.Technician.findOne({
         companyId: user.c_id,
