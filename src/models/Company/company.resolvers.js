@@ -12,7 +12,12 @@ export default {
       // Retrieve just the email and password for the company owner.
       const company = await context.models.Company.findOne({ email });
       if (!company) {
-        throw new GraphQLError("Invalid email.");
+        throw new GraphQLError("Invalid email.", {
+          extensions: {
+            code: "INVALID_LOGIN_CREDENTIAL",
+            field: "email",
+          },
+        });
       }
 
       // Compare passwords.
@@ -22,9 +27,18 @@ export default {
           { c_id: company._id, roles: company.owner.roles, c_email: email },
           { expiresIn: process.env.JWT_MAX_AGE }
         );
-        return apiToken;
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            resolve(apiToken);
+          }, 5000);
+        });
       } else {
-        throw new GraphQLError("Invalid password.");
+        throw new GraphQLError("Invalid password.", {
+          extensions: {
+            code: "INVALID_LOGIN_CREDENTIAL",
+            field: "password",
+          },
+        });
       }
     },
     signUp: async (parent, { signUpInput }, context, info) => {
