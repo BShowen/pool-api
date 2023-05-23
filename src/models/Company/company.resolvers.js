@@ -27,11 +27,7 @@ export default {
           { c_id: company._id, roles: company.owner.roles, c_email: email },
           { expiresIn: process.env.JWT_MAX_AGE }
         );
-        return new Promise((resolve, reject) => {
-          setTimeout(() => {
-            resolve(apiToken);
-          }, 5000);
-        });
+        return apiToken;
       } else {
         throw new GraphQLError("Invalid password.", {
           extensions: {
