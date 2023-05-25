@@ -89,16 +89,4 @@ export default {
       return savedCustomerAccount;
     },
   },
-  CustomerAccount: {
-    technician: async (parent, args, context, info) => {
-      if (!parent.technicianId) {
-        return null;
-      }
-
-      const technician = await context.models.Technician.findById({
-        _id: parent.technicianId,
-      });
-      return technician;
-    },
-  },
 };

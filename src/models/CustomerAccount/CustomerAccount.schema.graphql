@@ -3,6 +3,7 @@ type AccountOwner {
   lastName: String
   emailAddress: String
   phoneNumber: String
+  id: ID
 }
 
 type CustomerAccount {
@@ -11,10 +12,10 @@ type CustomerAccount {
   serviceDay: String
   serviceFrequency: String
   address: String
-  price: Int
+  price: Float
   companyId: ID
   id: ID
-  technician: Technician
+  technicianId: ID
   accountOwners: [AccountOwner]!
 }
 
@@ -23,6 +24,7 @@ input AccountOwnerInput {
   lastName: String
   emailAddress: String
   phoneNumber: String
+  id: ID
 }
 
 input CustomerAccountInput {
@@ -31,7 +33,7 @@ input CustomerAccountInput {
   serviceDay: String
   serviceFrequency: String
   address: String
-  price: Int
+  price: Float
   accountOwners: [AccountOwnerInput!]!
   id: ID
 }
@@ -41,6 +43,7 @@ input UpdateAccountOwnerInput {
   lastName: String!
   emailAddress: String!
   phoneNumber: String!
+  id: ID
 }
 
 input UpdateCustomerAccountInput {
@@ -49,8 +52,9 @@ input UpdateCustomerAccountInput {
   serviceDay: String
   serviceFrequency: String
   address: String
-  price: Int
+  price: Float
   accountOwners: [UpdateAccountOwnerInput!]!
+  companyId: ID
   id: ID!
   technicianId: ID
 }
