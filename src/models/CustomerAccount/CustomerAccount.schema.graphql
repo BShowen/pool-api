@@ -53,7 +53,7 @@ input UpdateCustomerAccountInput {
   serviceFrequency: String
   address: String
   price: Float
-  accountOwners: [UpdateAccountOwnerInput!]!
+  accountOwners: [UpdateAccountOwnerInput]
   companyId: ID
   id: ID!
   technicianId: ID
