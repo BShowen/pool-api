@@ -18,7 +18,6 @@ import typeDefs from "./typeDefs/index.js";
 import CustomerAccount from "./models/CustomerAccount/CustomerAccount.js";
 import Technician from "./models/Technician/Technician.js";
 import Company from "./models/Company/Company.js";
-import { formatError } from "./utils/formatError.js";
 
 mongoose.connect(process.env.DB_STRING);
 const db = mongoose.connection;
@@ -33,7 +32,6 @@ const httpServer = http.createServer(app);
 const server = new ApolloServer({
   schema,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-  formatError,
 });
 await server.start();
 

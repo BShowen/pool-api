@@ -2,6 +2,8 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
+import { validateMongooseModel } from "../../utils/validateMongooseModel.js";
+
 const customerAccountSchema = new Schema({
   accountName: {
     type: String,
@@ -137,5 +139,7 @@ const customerAccountSchema = new Schema({
     },
   ],
 });
+
+customerAccountSchema.pre("validate", validateMongooseModel);
 
 export default mongoose.model("CustomerAccount", customerAccountSchema);

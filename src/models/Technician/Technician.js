@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 
 // local modules
 import roles from "../../utils/roles.js";
+import { validateMongooseModel } from "../../utils/validateMongooseModel.js";
 
 const technicianSchema = new Schema({
   firstName: {
@@ -65,5 +66,7 @@ technicianSchema.pre("save", async function (next) {
   }
   next();
 });
+
+technicianSchema.pre("validate", validateMongooseModel);
 
 export default mongoose.model("Technician", technicianSchema);
