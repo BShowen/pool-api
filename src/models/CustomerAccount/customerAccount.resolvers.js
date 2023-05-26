@@ -77,6 +77,14 @@ export default {
         throw new GraphQLError("Invalid customer account id.");
       }
 
+      if (
+        "technicianId" in customerAccountInput &&
+        Number.parseInt(customerAccountInput.technicianId) === 0
+      ) {
+        // If the technicianId is zero then the user is removing the technicianId
+        customerAccountInput.technicianId = null;
+      }
+
       // Retrieve the account from the DB.
       const customerAccount = await CustomerAccount.findOne({
         companyId: user.c_id,
