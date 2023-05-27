@@ -58,6 +58,19 @@ export default {
 
       // Cast technicianId into mongoose ObjectId
       const techId = new mongoose.Types.ObjectId(technicianId);
+
+      // Check that technician isn't assigned to customer accounts.
+      const customerCount = await context.models.CustomerAccount.find({
+        companyId: user.c_id,
+        technicianId: techId,
+      }).countDocuments();
+
+      if (customerCount > 0) {
+        throw new GraphQLError(
+          "You must unassign this technician from all customers first."
+        );
+      }
+
       // Run the deletion query.
       const result = await context.models.Technician.deleteOne({ _id: techId });
 
