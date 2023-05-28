@@ -19,6 +19,7 @@ input CreateTechnicianInput {
   firstName: String!
   lastName: String!
   emailAddress: String!
+  registrationUrl: String!
 }
 
 input updateTechnicianInput {

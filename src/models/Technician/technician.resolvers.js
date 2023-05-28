@@ -2,6 +2,7 @@ import { GraphQLError } from "graphql";
 import mongoose from "mongoose";
 
 import sendTechnicianSignupEmail from "../../utils/courier.js";
+import { ERROR_CODES } from "../../utils/ERROR_CODES.js";
 
 export default {
   Query: {
@@ -28,9 +29,14 @@ export default {
         emailAddress: technician.emailAddress,
       });
       if (alreadyExists) {
-        throw new GraphQLError(
-          `A technician with "${technician.emailAddress}" already exists.`
-        );
+        throw new GraphQLError(ERROR_CODES.INVALID_USER_INPUT, {
+          extensions: {
+            fields: {
+              emailAddress: `A technician with "${technician.emailAddress}" already exists.`,
+            },
+            code: ERROR_CODES.INVALID_USER_INPUT,
+          },
+        });
       }
       // Associate the technician to the currently logged in company account
       technician.companyId = context.user.c_id;
