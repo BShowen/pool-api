@@ -97,4 +97,14 @@ export default {
       return savedCustomerAccount;
     },
   },
+  CustomerAccount: {
+    id: (parent) => {
+      return parent._id;
+    },
+  },
+  AccountOwner: {
+    id: (parent) => {
+      return parent._id;
+    },
+  },
 };
