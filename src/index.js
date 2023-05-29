@@ -73,6 +73,7 @@ await new Promise((resolve) =>
   httpServer.listen({ port: process.env.PORT }, resolve)
 );
 
+const url = `${process.env.PROTOCOL}://${process.env.HOST}:${process.env.PORT}`;
 console.log(
-  `🚀 Server ready at http://localhost:${process.env.PORT}/\nor http://192.168.1.138:${process.env.PORT}`
+  `🚀 Server ready at http://localhost:${process.env.PORT}/\nor ${url}`
 );
