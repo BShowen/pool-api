@@ -104,4 +104,16 @@ export default {
       return savedTechnician;
     },
   },
+  Technician: {
+    firstName: (parent) => {
+      return parent.firstName ? parent.firstName : "unassigned";
+    },
+    lastName: (parent) => {
+      return parent.lastName ? parent.lastName : "unassigned";
+    },
+    id: (parent) => {
+      const id = parent._id ? new mongoose.Types.ObjectId(parent._id) : null;
+      return id;
+    },
+  },
 };

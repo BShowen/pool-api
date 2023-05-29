@@ -2,12 +2,43 @@ import mongoose from "mongoose";
 export default {
   Query: {
     getServiceRouteList: async (parent, args, context, info) => {
-      const { user } = context;
-      user.authenticateAndAuthorize({ role: "MANAGER" });
-      const results = await context.models.Technician.find();
-      return results.map((tech) => {
-        return { technician: tech };
-      });
+      const companyId = new mongoose.Types.ObjectId(context.user.c_id);
+      const data = await context.models.CustomerAccount.aggregate([
+        { $match: { companyId } },
+        {
+          $lookup: {
+            from: "technicians",
+            localField: "technicianId",
+            foreignField: "_id",
+            as: "technician",
+          },
+        },
+        {
+          $group: {
+            _id: {
+              technicianId: { $arrayElemAt: ["$technician._id", 0] },
+              firstName: { $arrayElemAt: ["$technician.firstName", 0] },
+              lastName: { $arrayElemAt: ["$technician.lastName", 0] },
+            },
+            customers: { $push: "$$ROOT" },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            technician: {
+              _id: "$_id.technicianId",
+              firstName: "$_id.firstName",
+              lastName: "$_id.lastName",
+            },
+            customers: 1,
+            count: 1,
+          },
+        },
+        { $sort: { "technician.firstName": 1 } },
+      ]);
+      return data;
     },
     getGroupedServiceRoute: async (parent, args, context, info) => {
       const { user, models } = context;
@@ -40,15 +71,6 @@ export default {
         },
       ]);
       return routes;
-    },
-  },
-  ServiceRoute: {
-    customers: async (parent, args, context, info) => {
-      const technicianId = parent.technician._id;
-      const customers = await context.models.CustomerAccount.find({
-        technicianId,
-      });
-      return customers;
     },
   },
   ServiceRouteGrouped: {

@@ -3,6 +3,7 @@ type ServiceRoute {
   customers: [CustomerAccount]!
   "The technician associated with this route"
   technician: Technician
+  count: Int
 }
 
 type ServiceRouteGrouped {
