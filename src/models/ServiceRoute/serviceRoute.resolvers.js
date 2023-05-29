@@ -25,7 +25,7 @@ export default {
         {
           $group: {
             _id: "$serviceDay",
-            customers: { $push: "$$ROOT" },
+            customerAccounts: { $push: "$$ROOT" },
             total: { $sum: "$price" },
             count: { $sum: 1 },
           },
@@ -33,7 +33,7 @@ export default {
         {
           $project: {
             serviceDay: "$_id",
-            customers: 1,
+            customerAccounts: 1,
             total: 1,
             count: 1,
           },

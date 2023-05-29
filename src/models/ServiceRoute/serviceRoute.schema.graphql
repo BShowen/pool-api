@@ -7,7 +7,7 @@ type ServiceRoute {
 
 type ServiceRouteGrouped {
   serviceDay: String
-  customers: [CustomerAccount]!
+  customerAccounts: [CustomerAccount]!
   total: Int
   count: Int
 }
