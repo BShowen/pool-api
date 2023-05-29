@@ -51,4 +51,9 @@ export default {
       return customers;
     },
   },
+  ServiceRouteGrouped: {
+    total: (parent) => {
+      return Number.parseFloat(parent.total).toFixed(2);
+    },
+  },
 };

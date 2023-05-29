@@ -8,7 +8,7 @@ type ServiceRoute {
 type ServiceRouteGrouped {
   serviceDay: String
   customerAccounts: [CustomerAccount]!
-  total: Int
+  total: Float
   count: Int
 }
 
