@@ -90,8 +90,29 @@ export default {
         companyId: user.c_id,
         _id: customerAccountInput.id,
       });
+
+      // ------------------------------------------------------------------
+      // Sanitize the input
+      // When updating the customerAccount.accountOwners array, you have to
+      // supply the _id field and not the "id" field. Otherwise the sub-docs
+      // will get a new _id which will cause duplicate data in ApolloClient
+      // cache.
+      // Map over the customerAccount.accountOwners and replace the id field
+      // with _id and then remove the id field.
+      if (customerAccountInput.accountOwners) {
+        customerAccountInput.accountOwners =
+          customerAccountInput.accountOwners.map((accountOwnerDoc) => {
+            accountOwnerDoc._id = accountOwnerDoc.id;
+            delete accountOwnerDoc.id;
+            return accountOwnerDoc;
+          });
+      }
+      // ------------------------------------------------------------------
+
       // Update the document
+      console.log(customerAccountInput);
       customerAccount.set(customerAccountInput);
+
       // Save and return the document
       const savedCustomerAccount = await customerAccount.save();
       return savedCustomerAccount;
