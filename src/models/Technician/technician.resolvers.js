@@ -45,12 +45,20 @@ export default {
       // Create and save the new technician.
       const newTechnician = new context.models.Technician(technician);
       await newTechnician.save();
+
+      // ------------------------------------------------------------
       // Send email confirmation
+      // This string is not saved in the DB. It is added to the technician
+      // object AFTER saving to the DB. The registrationUrl is needed by the
+      // sendTechnicianSignupEmail function.
       technician.registrationUrl += `?q=${newTechnician._id}-${newTechnician.registrationSecret}`;
+      console.log({ tech: technician });
       await sendTechnicianSignupEmail({
         technician: technician,
         companyEmail: context.user.c_email,
       });
+      // ------------------------------------------------------------
+
       return newTechnician;
     },
     deleteTechnician: async (parent, { technicianId }, context, info) => {
