@@ -57,16 +57,14 @@ export default {
         throw new GraphQLError("Invalid customer account id.");
       }
 
-      const { deletedCount } = await CustomerAccount.deleteOne({
+      const deletedDocument = await CustomerAccount.findOneAndRemove({
         _id: id,
         companyId: user.c_id,
       });
 
-      if (deletedCount) {
-        return true;
-      } else {
-        return false;
-      }
+      return (
+        deletedDocument || new GraphQLError(`Cannot find account with id ${id}`)
+      );
     },
     updateCustomerAccount: async (parent, args, { user, models }, info) => {
       user.authenticateAndAuthorize({ role: "MANAGER" });
