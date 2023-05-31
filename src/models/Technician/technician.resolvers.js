@@ -100,14 +100,39 @@ export default {
 
       user.authenticateAndAuthorize({ role: "TECH" });
 
-      const technician = await models.Technician.findOne({
+      // If the technician email is changing we need to make sure that the
+      // desired email isn't already in use.
+
+      // Query the DB for the old technician.
+      const oldTechnician = await models.Technician.findOne({
         companyId: user.c_id,
         _id: updateTechnicianInput.id,
       });
 
-      technician.set(updateTechnicianInput);
+      // If email isn't being changed then proceed with the update.
+      const isChangingEmail =
+        oldTechnician.emailAddress !==
+        updateTechnicianInput.emailAddress.toLowerCase();
+      // If email is being changed then see if desired email is currently in use.
+      if (isChangingEmail) {
+        const emailInUse = await context.models.Technician.countDocuments({
+          emailAddress: updateTechnicianInput.emailAddress,
+        });
+        if (emailInUse) {
+          throw new GraphQLError(ERROR_CODES.INVALID_USER_INPUT, {
+            extensions: {
+              fields: {
+                emailAddress: `A technician with "${updateTechnicianInput.emailAddress}" already exists.`,
+              },
+              code: ERROR_CODES.INVALID_USER_INPUT,
+            },
+          });
+        }
+      }
 
-      const savedTechnician = await technician.save();
+      oldTechnician.set(updateTechnicianInput);
+
+      const savedTechnician = await oldTechnician.save();
 
       return savedTechnician;
     },
