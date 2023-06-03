@@ -13,6 +13,8 @@ type Query {
   getTechnicianList: [Technician]!
   "Get a single technician by id"
   getTechnician(id: ID): Technician
+  "Get a technician for registration"
+  getRegistrationTechnician(id: ID, registrationSecret: ID): Technician!
 }
 
 input CreateTechnicianInput {
@@ -29,6 +31,15 @@ input updateTechnicianInput {
   id: ID!
 }
 
+input registrationInput {
+  firstName: String!
+  lastName: String!
+  emailAddress: String!
+  id: ID!
+  password: String!
+  registrationSecret: String!
+}
+
 type Mutation {
   "Create a new technician"
   createNewTechnician(technician: CreateTechnicianInput!): Technician!
@@ -36,4 +47,6 @@ type Mutation {
   deleteTechnician(technicianId: ID!): Boolean!
   "Update a technician"
   updateTechnician(updateTechnicianInput: updateTechnicianInput!): Technician!
+  "Register a technician"
+  registerTechnician(technician: registrationInput!): Technician!
 }

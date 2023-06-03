@@ -56,7 +56,7 @@ const technicianSchema = new Schema({
     required: [true, "Technician employer is required."],
   },
   registrationSecret: {
-    type: String,
+    type: mongoose.Types.ObjectId,
   },
 });
 

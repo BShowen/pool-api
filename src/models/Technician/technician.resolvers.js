@@ -1,5 +1,5 @@
 import { GraphQLError } from "graphql";
-import mongoose from "mongoose";
+import mongoose, { model } from "mongoose";
 
 import sendTechnicianSignupEmail from "../../utils/courier.js";
 import { ERROR_CODES } from "../../utils/ERROR_CODES.js";
@@ -19,6 +19,17 @@ export default {
         _id: id,
       });
       return technician || null;
+    },
+    getRegistrationTechnician: async (
+      _,
+      { id, registrationSecret },
+      { models }
+    ) => {
+      const technician = await models.Technician.findOne({
+        _id: new mongoose.Types.ObjectId(id),
+        registrationSecret: new mongoose.Types.ObjectId(registrationSecret),
+      });
+      return technician || new GraphQLError("Cannot find that technician.");
     },
   },
   Mutation: {
@@ -135,6 +146,33 @@ export default {
       const savedTechnician = await oldTechnician.save();
 
       return savedTechnician;
+    },
+    registerTechnician: async (parent, args, context, info) => {
+      const { models } = context;
+      const { technician: technicianInput } = args;
+      // Make sure the password is provided.
+      if (!technicianInput.password) {
+        throw new GraphQLError(ERROR_CODES.MONGOOSE_VALIDATION_ERROR, {
+          extensions: {
+            code: ERROR_CODES.MONGOOSE_VALIDATION_ERROR,
+            fields: { password: "Password is required." },
+          },
+        });
+      }
+
+      // Password has been provided. Proceed with registration.
+      const technician = await models.Technician.findOne({
+        _id: technicianInput.id,
+        registrationSecret: technicianInput.registrationSecret,
+      });
+      // Remove the "registrationSecret".
+      technicianInput.registrationSecret = null;
+      // Update the technician with provided inputs.
+      technician.set({ ...technicianInput });
+      // Save the technician to the db.
+      const registeredTechnician = await technician.save();
+      // return the saved technician.
+      return registeredTechnician;
     },
   },
   Technician: {
