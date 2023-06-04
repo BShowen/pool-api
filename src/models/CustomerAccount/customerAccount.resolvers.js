@@ -108,7 +108,6 @@ export default {
       // ------------------------------------------------------------------
 
       // Update the document
-      console.log(customerAccountInput);
       customerAccount.set(customerAccountInput);
 
       // Save and return the document
