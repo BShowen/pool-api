@@ -1,6 +1,6 @@
 type ServiceRoute {
   "A list of customers in this route"
-  customers: [CustomerAccount]!
+  customerAccounts: [CustomerAccount]!
   "The technician associated with this route"
   technician: Technician
   count: Int
