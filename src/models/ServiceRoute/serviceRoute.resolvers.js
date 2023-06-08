@@ -72,6 +72,58 @@ export default {
       ]);
       return routes;
     },
+    getServiceRoute: async (parent, args, context, info) => {
+      const { user, models } = context;
+      const { u_id: userId } = user;
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+      });
+      // today = "06/07/2023" or "01/13/2023" etc
+      const today = formatter.format(new Date()).toLowerCase();
+
+      user.authenticateAndAuthorize({ role: "TECH" });
+
+      // Get all customers
+      // where serviceDay === today
+      // where technicianId === technicianId
+      const customerAccounts = await models.CustomerAccount.find({
+        // serviceDay: "wednesday" or "sunday" or "friday" etc.
+        serviceDay: new Intl.DateTimeFormat([], { weekday: "long" })
+          .format() //This formats today's date.
+          .toLowerCase(),
+        technicianId: userId,
+      });
+      // Filter the results and remove all customers where
+      // customerAccount.poolReport.date === todaysDate
+      const filtered = customerAccounts.filter((customerAccount) => {
+        // Get the most recent pool report.
+        const poolReport =
+          customerAccount.poolReports[customerAccount.poolReports.length - 1];
+        // No pool report, keep this customer. We need to create a pool report
+        if (!poolReport) return true;
+
+        // There is a pool report. If the date on the pool report is todays date
+        // then we don't want to keep this customer as they have already been
+        // serviced today.
+        const poolReportDate = formatter.format(poolReport.date);
+        if (poolReportDate === today) {
+          return false; //Remove this customer
+        } else {
+          return true; //Keep this customer
+        }
+      });
+
+      const technician = await models.Technician.findOne({ _id: userId });
+      const count = customerAccounts.length;
+
+      return {
+        customerAccounts: filtered,
+        technician,
+        count,
+      };
+    },
   },
   ServiceRouteGrouped: {
     total: (parent) => {

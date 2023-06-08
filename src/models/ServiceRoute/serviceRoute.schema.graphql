@@ -18,4 +18,6 @@ type Query {
   getServiceRouteList: [ServiceRoute]!
   "Get service route for a technician. Customer accounts grouped by service day"
   getGroupedServiceRoute(id: ID): [ServiceRouteGrouped]!
+  "Get a service route for a particular week day"
+  getServiceRoute: ServiceRoute
 }
