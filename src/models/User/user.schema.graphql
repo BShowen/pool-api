@@ -1,0 +1,59 @@
+type User {
+  id: ID
+  companyId: ID
+  firstName: String
+  lastName: String
+  emailAddress: String
+  password: String
+  registrationSecret: String
+  roles: [String]
+}
+
+input UserInput {
+  firstName: String!
+  lastName: String!
+  emailAddress: String!
+  password: String!
+  roles: [String]
+}
+
+type Query {
+  "Get a list of users"
+  userList(roles: String): [User]!
+  "Get a single user by id"
+  user(userId: ID, registrationSecret: ID): User
+}
+
+input CreateUserInput {
+  firstName: String!
+  lastName: String!
+  emailAddress: String!
+  registrationUrl: String!
+}
+
+input updateUserInput {
+  firstName: String
+  lastName: String
+  emailAddress: String
+  id: ID!
+}
+
+input registrationInput {
+  firstName: String!
+  lastName: String!
+  emailAddress: String!
+  id: ID!
+  password: String!
+  registrationSecret: String!
+}
+
+type Mutation {
+  "Create a new user"
+  newUser(user: CreateUserInput!): User!
+  "Delete a user"
+  deleteUser(userId: ID!): Boolean!
+  "Update a user"
+  updateUser(updateUserInput: updateUserInput!): User!
+  "Register a user"
+  registerUser(user: registrationInput!): User!
+}

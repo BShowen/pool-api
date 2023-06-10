@@ -87,9 +87,9 @@ const customerAccountSchema = new Schema({
     lowercase: true,
     trim: true,
   },
-  technicianId: {
+  userId: {
     type: mongoose.Types.ObjectId,
-    ref: "Technician",
+    ref: "User",
     required: false,
   },
   pool: {

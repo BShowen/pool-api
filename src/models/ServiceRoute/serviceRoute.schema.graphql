@@ -2,7 +2,7 @@ type ServiceRoute {
   "A list of customers in this route"
   customerAccounts: [CustomerAccount]!
   "The technician associated with this route"
-  technician: Technician
+  technician: User
   count: Int
 }
 
@@ -14,10 +14,10 @@ type ServiceRouteGrouped {
 }
 
 type Query {
-  "Get a list of service routes"
-  getServiceRouteList: [ServiceRoute]!
-  "Get service route for a technician. Customer accounts grouped by service day"
-  getGroupedServiceRoute(id: ID): [ServiceRouteGrouped]!
+  "Get a list of service routes grouped by technician"
+  serviceRouteList: [ServiceRoute]!
+  "Get service route for the currently logged in user. Customer accounts grouped by service day"
+  serviceRouteListGrouped: [ServiceRouteGrouped]!
   "Get a service route for a particular week day"
   getServiceRoute: ServiceRoute
 }

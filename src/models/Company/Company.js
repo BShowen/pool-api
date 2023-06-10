@@ -8,37 +8,9 @@ import roles from "../../utils/roles.js";
 
 const companySchema = new Schema({
   owner: {
-    firstName: {
-      type: String,
-      required: [true, "First name is required."],
-      lowercase: true,
-      trim: true,
-    },
-    lastName: {
-      type: String,
-      required: [true, "Last name is required."],
-      lowercase: true,
-      trim: true,
-    },
-    password: {
-      type: String,
-      required: [true, "Password is required."],
-      trim: true,
-    },
-    roles: {
-      type: [String],
-      default: ["ADMIN"],
-      validate: {
-        validator: function (roles) {
-          return !!roles.length;
-        },
-        message: "Role is required.",
-      },
-      enum: {
-        values: roles.ALL,
-        message: "{VALUE} is not a supported role.",
-      },
-    },
+    type: mongoose.Types.ObjectId,
+    ref: "User",
+    required: [true, "Company owner is required."],
   },
   name: {
     type: String,
@@ -54,13 +26,13 @@ const companySchema = new Schema({
       },
       message: (props) => `${props.value} is not a valid email.`,
     },
-    required: [true, "Email is required."],
+    required: [true, "Company email is required."],
     lowercase: true,
     trim: true,
   },
   phoneNumber: {
     type: String,
-    required: [true, "Phone number is required."],
+    required: [true, "Company phone number is required."],
   },
   address: {
     type: String,
@@ -68,11 +40,6 @@ const companySchema = new Schema({
     lowercase: true,
     trim: true,
   },
-});
-
-companySchema.pre("save", async function (next) {
-  this.owner.password = await bcrypt.hash(this.owner.password, 10);
-  next();
 });
 
 export default mongoose.model("Company", companySchema);

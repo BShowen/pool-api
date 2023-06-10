@@ -15,7 +15,7 @@ type CustomerAccount {
   price: Float
   companyId: ID
   id: ID
-  technicianId: ID
+  userId: ID
   accountOwners: [AccountOwner]!
 }
 
@@ -56,14 +56,14 @@ input UpdateCustomerAccountInput {
   accountOwners: [UpdateAccountOwnerInput]
   companyId: ID
   id: ID!
-  technicianId: ID
+  userId: ID
 }
 
 type Query {
-  "Get a list of customers"
-  getCustomerAccountList: [CustomerAccount]!
-  "Get a customer by id"
-  getCustomerAccount(id: ID): CustomerAccount
+  "Get a list of customer accounts"
+  customerAccountList: [CustomerAccount]!
+  "Get a single customer account"
+  customerAccount(id: ID!): CustomerAccount
 }
 
 type Mutation {
@@ -72,7 +72,7 @@ type Mutation {
     customerAccountInput: CustomerAccountInput
   ): CustomerAccount
   "Delete a customer account"
-  deleteCustomerAccount(id: ID): CustomerAccount!
+  deleteCustomerAccount(accountId: ID): CustomerAccount!
   "Update a customer account"
   updateCustomerAccount(
     customerAccountInput: UpdateCustomerAccountInput

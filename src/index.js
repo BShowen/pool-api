@@ -16,7 +16,7 @@ import resolvers from "./resolvers/index.js";
 import typeDefs from "./typeDefs/index.js";
 
 import CustomerAccount from "./models/CustomerAccount/CustomerAccount.js";
-import Technician from "./models/Technician/Technician.js";
+import User from "./models/User/User.js";
 import Company from "./models/Company/Company.js";
 
 mongoose.connect(process.env.DB_STRING);
@@ -60,7 +60,7 @@ app.use(
       return {
         models: {
           CustomerAccount,
-          Technician,
+          User,
           Company,
         },
         user: getUserFromToken({ req }),

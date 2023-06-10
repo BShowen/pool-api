@@ -7,7 +7,7 @@ import bcrypt from "bcrypt";
 import roles from "../../utils/roles.js";
 import { validateMongooseModel } from "../../utils/validateMongooseModel.js";
 
-const technicianSchema = new Schema({
+const userSchema = new Schema({
   firstName: {
     type: String,
     required: [true, "First name is required."],
@@ -53,20 +53,20 @@ const technicianSchema = new Schema({
   companyId: {
     type: mongoose.Types.ObjectId,
     ref: "Company",
-    required: [true, "Technician employer is required."],
+    // required: [true, "User employer is required."],
   },
   registrationSecret: {
     type: mongoose.Types.ObjectId,
   },
 });
 
-technicianSchema.pre("save", async function (next) {
-  if (this.password) {
+userSchema.pre("save", async function (next) {
+  if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 10);
   }
   next();
 });
 
-technicianSchema.pre("validate", validateMongooseModel);
+userSchema.pre("validate", validateMongooseModel);
 
-export default mongoose.model("Technician", technicianSchema);
+export default mongoose.model("User", userSchema);

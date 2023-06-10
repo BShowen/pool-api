@@ -6,17 +6,11 @@ type Mutation {
 }
 
 input signUpInput {
-  owner: CompanyOwnerInput!
+  owner: UserInput!
   name: String!
   email: String!
   phoneNumber: String!
   address: String!
-}
-
-input CompanyOwnerInput {
-  firstName: String!
-  lastName: String!
-  password: String!
 }
 
 type Company {

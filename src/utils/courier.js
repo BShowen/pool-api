@@ -7,11 +7,11 @@ const courier = CourierClient({
 });
 
 /**
- * This functions takes in a technician object and the companyEmail address,
- * and sends an email to the technicians email address.
+ * This functions takes in a user object and the companyEmail address,
+ * and sends an email to the users email address.
  */
 
-export default async ({ technician, companyEmail }) => {
+export default async ({ user, companyEmail }) => {
   if (process.env.EMAIL_ENABLED === undefined) {
     throw new Error("Please define process.env.EMAIL_ENABLED");
   }
@@ -24,11 +24,11 @@ export default async ({ technician, companyEmail }) => {
   const { requestId } = await courier.send({
     message: {
       to: {
-        email: technician.emailAddress,
+        email: user.emailAddress,
       },
       content: {
-        title: `Hi ${technician.firstName}!`,
-        body: `Use the following link to complete your registration: ${technician.registrationUrl}`,
+        title: `Hi ${user.firstName}!`,
+        body: `Use the following link to complete your registration: ${user.registrationUrl}`,
       },
       routing: {
         method: "single",

@@ -2,13 +2,15 @@ import mongoose from "mongoose";
 import { GraphQLError } from "graphql";
 export default {
   Query: {
-    getCustomerAccountList: async (parent, args, context, info) => {
+    customerAccountList: async (_, __, context) => {
       const { user } = context;
       user.authenticateAndAuthorize({ role: "TECH" });
-      const results = await context.models.CustomerAccount.find();
+      const results = await context.models.CustomerAccount.find({
+        companyId: user.c_id,
+      });
       return results;
     },
-    getCustomerAccount: async (paren, { id }, { user, models }, info) => {
+    customerAccount: async (_, { id }, { user, models }) => {
       user.authenticateAndAuthorize({ role: "TECH" });
       const { CustomerAccount } = models;
       const companyId = new mongoose.Types.ObjectId(user.c_id);
@@ -27,46 +29,38 @@ export default {
   },
   Mutation: {
     createNewCustomerAccount: async (
-      parent,
+      _,
       { customerAccountInput },
-      { user, models },
-      info
+      { user, models }
     ) => {
       user.authenticateAndAuthorize({ role: "MANAGER" });
-
       const { CustomerAccount } = models;
-
       customerAccountInput.companyId = user.c_id;
-
-      // When this was a rest API I had to parse the accountOwners because it
-      // was sent as a string.
-      // customerAccountInput.accountOwners = JSON.parse(
-      //   customerAccountInput.accountOwners || "[]"
-      // );
-
       const newCustomerAccount = new CustomerAccount(customerAccountInput);
       const savedCustomerAccount = await newCustomerAccount.save();
       return savedCustomerAccount;
     },
-    deleteCustomerAccount: async (parent, { id }, { user, models }, info) => {
+    deleteCustomerAccount: async (_, args, { user, models }) => {
       user.authenticateAndAuthorize({ role: "MANAGER" });
       const { CustomerAccount } = models;
+      const { accountId } = args;
 
-      if (!mongoose.Types.ObjectId.isValid(id)) {
+      if (!mongoose.Types.ObjectId.isValid(accountId)) {
         // Make sure provided account id is valid mongoose id.
         throw new GraphQLError("Invalid customer account id.");
       }
 
       const deletedDocument = await CustomerAccount.findOneAndRemove({
-        _id: id,
+        _id: accountId,
         companyId: user.c_id,
       });
 
       return (
-        deletedDocument || new GraphQLError(`Cannot find account with id ${id}`)
+        deletedDocument ||
+        new GraphQLError(`Cannot find account with id ${accountId}`)
       );
     },
-    updateCustomerAccount: async (parent, args, { user, models }, info) => {
+    updateCustomerAccount: async (_, args, { user, models }) => {
       user.authenticateAndAuthorize({ role: "MANAGER" });
       const { customerAccountInput } = args;
       const { CustomerAccount } = models;
@@ -76,11 +70,11 @@ export default {
       }
 
       if (
-        "technicianId" in customerAccountInput &&
-        Number.parseInt(customerAccountInput.technicianId) === 0
+        "userId" in customerAccountInput &&
+        Number.parseInt(customerAccountInput.userId) === 0
       ) {
-        // If the technicianId is zero then the user is removing the technicianId
-        customerAccountInput.technicianId = null;
+        // If the userId is zero then the user is removing the userId
+        customerAccountInput.userId = null;
       }
 
       // Retrieve the account from the DB.

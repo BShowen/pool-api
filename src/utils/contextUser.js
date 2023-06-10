@@ -26,7 +26,8 @@ export default {
     // User is not authenticated.
     throw new GraphQLError(`Not authenticated.`);
   },
-  c_id: undefined,
+  u_id: undefined, //The user id for the currently logged in user.
+  c_id: undefined, //The company id.
   roles: [],
   c_email: undefined,
   iat: undefined,

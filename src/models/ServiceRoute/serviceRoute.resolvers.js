@@ -1,14 +1,14 @@
 import mongoose from "mongoose";
 export default {
   Query: {
-    getServiceRouteList: async (parent, args, context, info) => {
+    serviceRouteList: async (_, __, context) => {
       const companyId = new mongoose.Types.ObjectId(context.user.c_id);
       const data = await context.models.CustomerAccount.aggregate([
         { $match: { companyId } },
         {
           $lookup: {
-            from: "technicians",
-            localField: "technicianId",
+            from: "users",
+            localField: "userId",
             foreignField: "_id",
             as: "technician",
           },
@@ -16,9 +16,9 @@ export default {
         {
           $group: {
             _id: {
-              technicianId: { $arrayElemAt: ["$technician._id", 0] },
-              firstName: { $arrayElemAt: ["$technician.firstName", 0] },
-              lastName: { $arrayElemAt: ["$technician.lastName", 0] },
+              $mergeObjects: {
+                $arrayElemAt: ["$technician", 0],
+              },
             },
             customerAccounts: { $push: "$$ROOT" },
             count: { $sum: 1 },
@@ -26,11 +26,8 @@ export default {
         },
         {
           $project: {
-            _id: 0,
             technician: {
-              _id: "$_id.technicianId",
-              firstName: "$_id.firstName",
-              lastName: "$_id.lastName",
+              $mergeObjects: "$_id",
             },
             customerAccounts: 1,
             count: 1,
@@ -40,16 +37,15 @@ export default {
       ]);
       return data;
     },
-    getGroupedServiceRoute: async (parent, args, context, info) => {
+    serviceRouteListGrouped: async (_, __, context) => {
       const { user, models } = context;
-      const { id: technicianId } = args;
 
       user.authenticateAndAuthorize({ role: "TECH" });
 
       const routes = await models.CustomerAccount.aggregate([
         {
           $match: {
-            technicianId: new mongoose.Types.ObjectId(technicianId),
+            userId: new mongoose.Types.ObjectId(user.u_id),
             companyId: new mongoose.Types.ObjectId(user.c_id),
           },
         },
@@ -72,9 +68,8 @@ export default {
       ]);
       return routes;
     },
-    getServiceRoute: async (parent, args, context, info) => {
+    getServiceRoute: async (_, __, context) => {
       const { user, models } = context;
-      const { u_id: userId } = user;
       const formatter = new Intl.DateTimeFormat("en-US", {
         year: "numeric",
         month: "numeric",
@@ -93,7 +88,7 @@ export default {
         serviceDay: new Intl.DateTimeFormat([], { weekday: "long" })
           .format() //This formats today's date.
           .toLowerCase(),
-        technicianId: userId,
+        userId: user.u_id,
       });
       // Filter the results and remove all customers where
       // customerAccount.poolReport.date === todaysDate
@@ -115,7 +110,7 @@ export default {
         }
       });
 
-      const technician = await models.Technician.findOne({ _id: userId });
+      const technician = await models.User.findOne({ _id: user.u_id });
       const count = customerAccounts.length;
 
       return {
