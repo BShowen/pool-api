@@ -1,0 +1,33 @@
+type Customer {
+  firstName: String
+  lastName: String
+  emailAddress: String
+  phoneNumber: String
+  password: String
+  roles: [String]
+  account: ID
+  id: ID
+}
+
+input UpdateCustomer {
+  firstName: String
+  lastName: String
+  emailAddress: String
+  phoneNumber: String
+  password: String
+  account: ID
+  id: ID!
+}
+
+input NewCustomer {
+  firstName: String!
+  lastName: String!
+  emailAddress: String!
+  phoneNumber: String
+  account: ID!
+  id: ID
+}
+
+type Mutation {
+  newCustomer(input: NewCustomer): Customer
+}

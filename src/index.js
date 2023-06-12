@@ -18,6 +18,8 @@ import typeDefs from "./typeDefs/index.js";
 import CustomerAccount from "./models/CustomerAccount/CustomerAccount.js";
 import User from "./models/User/User.js";
 import Company from "./models/Company/Company.js";
+import Technician from "./models/Technician/Technician.js";
+import Customer from "./models/Customer/Customer.js";
 
 mongoose.connect(process.env.DB_STRING);
 const db = mongoose.connection;
@@ -62,6 +64,8 @@ app.use(
           CustomerAccount,
           User,
           Company,
+          Technician,
+          Customer,
         },
         user: getUserFromToken({ req }),
       };
