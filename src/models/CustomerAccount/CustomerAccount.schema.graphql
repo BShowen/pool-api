@@ -1,11 +1,3 @@
-type AccountOwner {
-  firstName: String
-  lastName: String
-  emailAddress: String
-  phoneNumber: String
-  id: ID
-}
-
 type CustomerAccount {
   accountName: String
   serviceType: String
@@ -13,37 +5,39 @@ type CustomerAccount {
   serviceFrequency: String
   address: String
   price: Float
-  companyId: ID
+  "The company this account belongs to."
+  company: ID
   id: ID
-  userId: ID
-  accountOwners: [AccountOwner]!
+  "The technician that services this account."
+  technician: Technician
+  accountOwners: [Customer]!
 }
 
-input AccountOwnerInput {
-  firstName: String
-  lastName: String
-  emailAddress: String
-  phoneNumber: String
-  id: ID
-}
-
-input CustomerAccountInput {
+# The type returned in the ServiceRoute.customerAccounts array.
+# This is the same type as CustomerAccount with some fields removed.
+type ServiceRouteCustomerAccount {
   accountName: String
   serviceType: String
   serviceDay: String
   serviceFrequency: String
   address: String
   price: Float
-  accountOwners: [AccountOwnerInput!]!
   id: ID
+  accountOwners: [Customer]!
 }
 
-input UpdateAccountOwnerInput {
-  firstName: String!
-  lastName: String!
-  emailAddress: String!
-  phoneNumber: String!
-  id: ID
+input CustomerAccountInput {
+  accountName: String!
+  serviceType: String!
+  serviceDay: String!
+  serviceFrequency: String!
+  address: String!
+  price: Float!
+}
+
+input NewCustomerAccount {
+  account: CustomerAccountInput!
+  accountOwners: [CustomerInput!]!
 }
 
 input UpdateCustomerAccountInput {
@@ -53,28 +47,22 @@ input UpdateCustomerAccountInput {
   serviceFrequency: String
   address: String
   price: Float
-  accountOwners: [UpdateAccountOwnerInput]
-  companyId: ID
   id: ID!
-  userId: ID
+  technician: ID
 }
 
 type Query {
   "Get a list of customer accounts"
   customerAccountList: [CustomerAccount]!
   "Get a single customer account"
-  customerAccount(id: ID!): CustomerAccount
+  customerAccount(accountId: ID!): CustomerAccount
 }
 
 type Mutation {
   "Create a new customer account"
-  createNewCustomerAccount(
-    customerAccountInput: CustomerAccountInput
-  ): CustomerAccount
+  newCustomerAccount(input: NewCustomerAccount): CustomerAccount
   "Delete a customer account"
   deleteCustomerAccount(accountId: ID): CustomerAccount!
   "Update a customer account"
-  updateCustomerAccount(
-    customerAccountInput: UpdateCustomerAccountInput
-  ): CustomerAccount
+  updateCustomerAccount(input: UpdateCustomerAccountInput): CustomerAccount
 }

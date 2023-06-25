@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
-import { validateMongooseModel } from "../../utils/validateMongooseModel.js";
+import { MongooseUtil } from "../../utils/MongooseUtil.js";
 
 const customerAccountSchema = new Schema({
   accountName: {
@@ -33,53 +33,10 @@ const customerAccountSchema = new Schema({
     type: Number,
     required: [true, "Monthly price is required."],
   },
-  companyId: {
+  company: {
     type: mongoose.Types.ObjectId,
     ref: "Company",
     required: [true, "Account company is required."],
-  },
-  accountOwners: {
-    type: [
-      {
-        // <Customer>
-        firstName: {
-          type: String,
-          required: [true, "Customer first name is required."],
-          lowercase: true,
-          trim: true,
-        },
-        lastName: {
-          type: String,
-          required: [true, "Customer last name is required."],
-          lowercase: true,
-          trim: true,
-        },
-        emailAddress: {
-          type: String,
-          validate: {
-            validator: function (v) {
-              return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
-            },
-            message: (props) => `${props.value} is not a valid email.`,
-          },
-          required: [true, "Customer email is required."],
-          lowercase: true,
-          trim: true,
-        },
-        phoneNumber: {
-          type: String,
-          required: [true, "Customer phone number is required."],
-          lowercase: true,
-          trim: true,
-        },
-      },
-    ],
-    validate: {
-      validator: function (value) {
-        return !(value.length == 0);
-      },
-      message: "At least one account owner is required.",
-    },
   },
   address: {
     type: String,
@@ -87,59 +44,236 @@ const customerAccountSchema = new Schema({
     lowercase: true,
     trim: true,
   },
-  userId: {
+  technician: {
     type: mongoose.Types.ObjectId,
     ref: "User",
     required: false,
   },
-  pool: {
-    // <SwimmingPool>
-    type: {
-      enum: {
-        values: ["Salt", "Chlorine"],
-      },
-      gallons: {
-        type: Number,
-        required: [true, "Pool gallons is required."],
-      },
-      // equipment info in the future.
-    },
-  },
-  poolReports: [
-    {
-      // <PoolReport>
-      date: Date,
-      chemicalsTested: {
-        chlorine: Number,
-        pH: Number,
-        alkalinity: Number,
-        stabilizer: Number,
-        calciumHardness: Number,
-        salt: Number,
-        phosphates: Number,
-      },
-      chemicalsAdded: {
-        chlorine: String,
-        acid: Number,
-        sodiumBicarb: Number,
-        stabilizer: Number,
-        calciumHardness: Number,
-        salt: Number,
-        tablets: Number,
-        phosphateRemover: Number,
-        diatomaceousEarth: Number,
-      },
-      workPerformed: {
-        brush: Boolean,
-        skimmerBasket: Boolean,
-        pumpBasket: Boolean,
-        filter: Boolean,
-      },
-      notes: String,
-    },
-  ],
+  // pool: {
+  //   // <SwimmingPool>
+  //   type: {
+  //     enum: {
+  //       values: ["Salt", "Chlorine"],
+  //     },
+  //     gallons: {
+  //       type: Number,
+  //       required: [true, "Pool gallons is required."],
+  //     },
+  //     // equipment info in the future.
+  //   },
+  // },
+  // poolReports: [
+  //   {
+  //     // <PoolReport>
+  //     date: Date,
+  //     chemicalsTested: {
+  //       chlorine: Number,
+  //       pH: Number,
+  //       alkalinity: Number,
+  //       stabilizer: Number,
+  //       calciumHardness: Number,
+  //       salt: Number,
+  //       phosphates: Number,
+  //     },
+  //     chemicalsAdded: {
+  //       chlorine: String,
+  //       acid: Number,
+  //       sodiumBicarb: Number,
+  //       stabilizer: Number,
+  //       calciumHardness: Number,
+  //       salt: Number,
+  //       tablets: Number,
+  //       phosphateRemover: Number,
+  //       diatomaceousEarth: Number,
+  //     },
+  //     workPerformed: {
+  //       brush: Boolean,
+  //       skimmerBasket: Boolean,
+  //       pumpBasket: Boolean,
+  //       filter: Boolean,
+  //     },
+  //     notes: String,
+  //   },
+  // ],
 });
 
-customerAccountSchema.pre("validate", validateMongooseModel);
+customerAccountSchema.virtual("accountOwners", {
+  ref: "User",
+  localField: "_id",
+  foreignField: "account",
+  justOne: false,
+});
+
+/**
+ * All static methods on this model will attempt to perform their respective
+ * process. Errors are not handled or even detected. If the static method fails,
+ * the error will propagate up to the caller, which is the resolver function.
+ * The resolver is responsible for handling and formatting all errors.
+ */
+
+/**
+ * Validate a customer account.
+ * Return undefined inf valid.
+ * Throw error if invalid.
+ */
+customerAccountSchema.static(
+  "validate",
+  async function ({ customerAccountInput }, options = {}) {
+    const { pathsToSkip = [] } = options;
+    const customerAccount = new this(customerAccountInput);
+    await customerAccount.validate({ pathsToSkip });
+  }
+);
+
+/**
+ * Create, save, and return a new customer account.
+ * Throw error if there is an error.
+ */
+customerAccountSchema.static(
+  "createCustomerAccount",
+  async function ({ customerAccountInput }) {
+    return await new this(customerAccountInput).save();
+  }
+);
+
+/**
+ * Return a list of customer accounts associated with the current user.
+ */
+customerAccountSchema.static(
+  "getCustomerAccountList",
+  async function ({ companyId }) {
+    MongooseUtil.validateMongooseId(companyId);
+    return await this.find({
+      company: new mongoose.Types.ObjectId(companyId),
+    });
+  }
+);
+
+/**
+ * Find and return a customer account by id.
+ * Throw error if no customer account found.
+ */
+customerAccountSchema.static(
+  "getCustomerAccountById",
+  async function ({ companyId, accountId }) {
+    MongooseUtil.validateMongooseId([accountId, companyId]);
+    const customerAccount = await this.findOne({
+      company: new mongoose.Types.ObjectId(companyId),
+      _id: new mongoose.Types.ObjectId(accountId),
+    });
+
+    if (customerAccount) {
+      return customerAccount;
+    }
+
+    throw new Error("An account with that id could not be found.");
+  }
+);
+
+/**
+ * Delete an account.
+ * Return the deleted document if no errors.
+ * Throw error if there is an error.
+ */
+customerAccountSchema.static(
+  "deleteAccount",
+  async function ({ companyId, accountId }) {
+    MongooseUtil.validateMongooseId(accountId);
+    // Delete and return the customer account
+    const deletedDoc = await this.findOneAndDelete({
+      _id: new mongoose.Types.ObjectId(accountId),
+      company: new mongoose.Types.ObjectId(companyId),
+    });
+
+    if (deletedDoc) {
+      return deletedDoc;
+    }
+
+    throw new Error("A customer account with that id could not be found.");
+  }
+);
+
+/**
+ * Update a customer account.
+ * Return the updated document. if no errors.
+ * Throw error if there is an error.
+ */
+customerAccountSchema.static(
+  "updateCustomerAccount",
+  async function ({ input, companyId }) {
+    MongooseUtil.validateMongooseId(input.id);
+    // Retrieve the account from the DB to perform the update.
+    const customerAccount = await this.getCustomerAccountById({
+      companyId,
+      accountId: input.id,
+    });
+
+    if ("technician" in input && input.technician == 0) {
+      // If the technician is zero then the user is removing the technician
+      input.technician = null;
+    } else if ("technician" in input && input.technician != 0) {
+      // Validate the technician id.
+      MongooseUtil.validateMongooseId(input.technician);
+      // verify technician exists.
+      const count = await mongoose.models.Technician.countDocuments({
+        _id: new mongoose.Types.ObjectId(input.technician),
+        company: new mongoose.Types.ObjectId(companyId),
+      });
+      if (count == 0) {
+        throw new Error(
+          `A technician with ${input.technician} cannot be found.`
+        );
+      }
+    }
+
+    // Update the document
+    customerAccount.set(input);
+
+    // Save and return the document
+    return await customerAccount.save();
+  }
+);
+
+customerAccountSchema.post("deleteAccount", async function (account, next) {
+  /**
+   * Delete each accountOwner associated with this account AFTER the static
+   * method "deleteAccount" is called.
+   */
+  try {
+    await mongoose.models.Customer.deleteMany({
+      company: new mongoose.Types.ObjectId(account.company),
+      account: new mongoose.Types.ObjectId(account._id),
+    });
+    next();
+  } catch (error) {
+    throw new Error("Error deleting account owners.");
+  }
+});
+customerAccountSchema.pre("findOneAndDelete", async function (next) {
+  this.populate("accountOwners");
+  this.populate("technician");
+  next();
+});
+customerAccountSchema.post("findOne", async function (doc, next) {
+  if (doc) {
+    await doc.populate("accountOwners");
+    await doc.populate("technician");
+  }
+  next();
+});
+customerAccountSchema.post("find", async function (docs, next) {
+  if (docs.length > 0) {
+    for (const doc of docs) {
+      await doc.populate("accountOwners");
+      await doc.populate("technician");
+    }
+  }
+  next();
+});
+customerAccountSchema.post("save", async function (doc, next) {
+  await doc.populate("accountOwners");
+  await doc.populate("technician");
+  next();
+});
 
 export default mongoose.model("CustomerAccount", customerAccountSchema);
