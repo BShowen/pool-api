@@ -4,9 +4,22 @@ type Customer {
   emailAddress: String
   phoneNumber: String
   password: String
-  roles: [String]
   account: ID
   id: ID
+}
+
+input NewCustomer {
+  "The ID of the account to add the customers too."
+  account: ID!
+  "A list of new customers."
+  customerList: [CustomerInput!]!
+}
+
+input CustomerInput {
+  firstName: String!
+  lastName: String!
+  emailAddress: String!
+  phoneNumber: String!
 }
 
 input UpdateCustomer {
@@ -15,19 +28,14 @@ input UpdateCustomer {
   emailAddress: String
   phoneNumber: String
   password: String
-  account: ID
   id: ID!
 }
 
-input NewCustomer {
-  firstName: String!
-  lastName: String!
-  emailAddress: String!
-  phoneNumber: String
-  account: ID!
-  id: ID
-}
-
 type Mutation {
-  newCustomer(input: NewCustomer): Customer
+  "Update a customer's information"
+  updateCustomers(input: [UpdateCustomer!]!): [Customer!]!
+  "Create a new customer to add to an account"
+  newCustomers(input: NewCustomer!): [Customer!]!
+  "Delete a customer"
+  deleteCustomer(customerId: ID!): Customer!
 }
