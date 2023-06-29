@@ -11,7 +11,7 @@ import bcrypt from "bcrypt";
 
 // local modules
 import roles from "../../utils/roles.js";
-import { validateMongooseModel } from "../../utils/validateMongooseModel.js";
+import { ERROR_CODES } from "../../utils/ERROR_CODES.js";
 
 const userSchema = new Schema(
   {
@@ -29,20 +29,32 @@ const userSchema = new Schema(
     },
     emailAddress: {
       type: String,
-      validate: {
-        validator: function (v) {
-          return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
+      validate: [
+        {
+          validator: function (v) {
+            return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
+          },
+          message: (props) => `${props.value} is not a valid email.`,
         },
-        message: (props) => `${props.value} is not a valid email.`,
-      },
+        {
+          validator: async function (emailAddress) {
+            // If the email field isn't modified then no need to check for
+            // uniqueness since the email isn't changing.
+            // This rule is here for updating documents.
+            if (!this.isModified("emailAddress")) return true;
+
+            const count = await mongoose.models.User.countDocuments({
+              emailAddress,
+            });
+            return count === 0;
+          },
+          message: (props) => `${props.value} is taken.`,
+        },
+      ],
       required: [true, "Email is required."],
       lowercase: true,
       trim: true,
-    },
-    phoneNumber: {
-      type: String,
-      required: [true, "Phone number is required."],
-      trim: true,
+      unique: true, //Create an index on the "emailAddress" field
     },
     password: {
       type: String,
@@ -51,9 +63,42 @@ const userSchema = new Schema(
     registrationSecret: {
       type: mongoose.Types.ObjectId,
     },
+    roles: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: function (roles) {
+          return !!roles.length;
+        },
+        message: "Role is required.",
+      },
+      enum: {
+        values: roles.ALL,
+        message: "{VALUE} is not a supported role.",
+      },
+    },
+    company: {
+      type: mongoose.Types.ObjectId,
+      ref: "Company",
+      required: [true, "Company id is required."],
+    },
   },
   { discriminatorKey: "type" }
 );
+
+userSchema.statics.findByEmail = function ({ emailAddress }) {
+  return this.findOne({
+    emailAddress: emailAddress.toLowerCase(),
+  }).populate({ path: "company", select: "_id email" });
+};
+
+/**
+ * Authenticates the user by verifying the password.
+ * Return true / false
+ */
+userSchema.methods.authenticate = function ({ password }) {
+  return bcrypt.compareSync(password, this.password);
+};
 
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
@@ -61,7 +106,5 @@ userSchema.pre("save", async function (next) {
   }
   next();
 });
-
-userSchema.pre("validate", validateMongooseModel);
 
 export default mongoose.model("User", userSchema);
