@@ -1,81 +1,87 @@
 import { GraphQLError } from "graphql";
 import bcrypt from "bcrypt";
+
+import { ERROR_CODES } from "../../utils/ERROR_CODES.js";
 import signJwt from "../../utils/signJwt.js";
 
 export default {
   Mutation: {
-    login: async (_, args, context) => {
-      // Get the email and password from request.
-      const email = args.email?.toLowerCase();
-      const password = args.password;
+    login: async (_, { input }, { models }) => {
+      /**
+       * Authenticate the user using email and password.
+       * Return a JWT if valid.
+       * Return error message with reason if not valid.
+       */
 
-      // Find the user in the DB.
-      const user = await context.models.User.findOne({ emailAddress: email });
+      const { User } = models;
+      const { email, password } = input;
+
+      // Find the user by email. If not found, throw error
+      const user = await User.findByEmail({ emailAddress: email });
       if (!user) {
         throw new GraphQLError("Invalid email.", {
           extensions: {
-            code: "INVALID_LOGIN_CREDENTIAL",
+            code: ERROR_CODES.INVALID_LOGIN_CREDENTIAL,
             field: "email",
           },
         });
       }
 
-      // Compare passwords.
-      if (bcrypt.compareSync(password, user.password)) {
-        // Return 200 status with api key if matched
-        const apiToken = signJwt(
+      // Authenticate the user with the password. Throw error if invalid.
+      if (user.authenticate({ password })) {
+        return signJwt(
           {
             u_id: user._id,
-            c_id: user.companyId,
+            c_id: user.company._id,
             roles: user.roles,
-            c_email: email,
+            c_email: user.company.email,
           },
           { expiresIn: process.env.JWT_MAX_AGE }
         );
-        return apiToken;
       } else {
-        throw new GraphQLError("Invalid password.", {
+        throw new GraphQLError("Invalid password", {
           extensions: {
-            code: "INVALID_LOGIN_CREDENTIAL",
+            code: ERROR_CODES.INVALID_LOGIN_CREDENTIAL,
             field: "password",
           },
         });
       }
     },
-    signUp: async (_, { signUpInput }, context) => {
+    signUp: async (_, { signUpInput }, { models }) => {
+      const { Company, User, Technician } = models;
       // Check to make sure company email isn't in use.
-      const companyEmailTaken = await context.models.Company.findOne({
-        email: signUpInput.email,
+      const companyCount = await Company.countDocuments({
+        email: signUpInput.email.toLowerCase(),
       });
-      if (!!companyEmailTaken) {
+      if (companyCount > 0) {
         throw new GraphQLError("That company email is already in use.");
       }
 
       // Check to make sure user email isn't in use.
-      const userEmailTaken = await context.models.User.findOne({
-        emailAddress: signUpInput.owner.emailAddress,
+      const userCount = await User.countDocuments({
+        emailAddress: signUpInput.owner.emailAddress.toLowerCase(),
       });
-      if (!!userEmailTaken) {
+      if (userCount > 0) {
         throw new GraphQLError("That email is already in use.");
       }
 
       // -----------------------------------------------------------------------
       // Create the User (Business owner)
-      signUpInput.owner.roles = signUpInput.owner.roles || ["ADMIN"];
-      const owner = await new context.models.User(signUpInput.owner).save();
+      const ownerInput = { ...signUpInput.owner, roles: ["ADMIN"] };
+      const owner = await new Technician(ownerInput);
       // -----------------------------------------------------------------------
 
       // -----------------------------------------------------------------------
       // Create Company
-      signUpInput.owner = owner._id;
-      const company = await new context.models.Company(signUpInput).save();
-      owner.companyId = company._id;
-      await owner.save();
+      const companyInput = { ...signUpInput, owner: owner._id };
+      const company = await new Company(companyInput);
+      owner.set({ company: company._id });
+      await Promise.all([owner.save(), company.save()]);
       const apiToken = signJwt(
         {
           u_id: owner._id,
           c_id: company._id,
-          roles: company.owner.roles,
+          roles: owner.roles,
           c_email: company.email,
         },
         {

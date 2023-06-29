@@ -1,35 +1,26 @@
-type Mutation {
-  "Get and authorization token (JWT) for the user"
-  login(email: String, password: String): String
-  "Create a new account"
-  signUp(signUpInput: signUpInput): String
-}
-
-input signUpInput {
-  owner: UserInput!
+input SignUpInput {
   name: String!
   email: String!
   phoneNumber: String!
   address: String!
+  owner: OwnerInput!
 }
 
-type Company {
-  owner: CompanyOwner!
-  name: String!
+input OwnerInput {
+  firstName: String
+  lastName: String
+  emailAddress: String
+  password: String
+}
+
+input LoginInput {
   email: String!
-  phoneNumber: String!
-  address: String!
-}
-
-type CompanyOwner {
-  firstName: String!
-  lastName: String!
   password: String!
-  roles: [AllowedRoles]
 }
-enum AllowedRoles {
-  ADMIN
-  MANAGER
-  TECH
-  CUSTOMER
+
+type Mutation {
+  "Get an authorization token (JWT) for the user"
+  login(input: LoginInput): String
+  "Create a new account"
+  signUp(signUpInput: SignUpInput): String
 }

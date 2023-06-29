@@ -1,10 +1,6 @@
 // npm modules
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
-import bcrypt from "bcrypt";
-
-// local modules
-import roles from "../../utils/roles.js";
 
 const companySchema = new Schema({
   owner: {
