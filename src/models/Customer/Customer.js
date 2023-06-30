@@ -49,11 +49,12 @@ const customerSchema = new Schema({
 
 /**
  * Validate a customer.
+ * customerDocumentList is an array of instantiated Customer documents
  * Return undefined if valid.
  * Throw error if invalid.
  */
 customerSchema.statics.validate = async function (
-  { customerInputList },
+  { customerDocumentList },
   options = {}
 ) {
   // Validation paths to skip, if any.
@@ -64,11 +65,10 @@ customerSchema.statics.validate = async function (
   const errorMap = new Map();
   // Iterate through customerInputList and validate each document, storing
   // any errors in errorMap
-  for (const [index, accountOwnerInput] of customerInputList.entries()) {
-    const accountOwner = new this(accountOwnerInput);
+  for (const [index, customer] of customerDocumentList.entries()) {
     // Validate document.
     try {
-      await accountOwner.validate({ pathsToSkip });
+      await customer.validate({ pathsToSkip });
     } catch (validationError) {
       // Store the error.
       errorMap.set(index, validationError);
@@ -143,13 +143,6 @@ customerSchema.statics.updateCustomers = async function ({
     customerInputList.map((customer) => customer.id)
   );
 
-  // This is a list of errors that may accumulate from validating customers.
-  // Each customer gets the updated applied, then validated, and if valid, saved.
-  // I prefer to validate all customers and return a list of validation errors
-  // for any and all customers that are invalid. This way the client and submit
-  // data and get all of it's data validated.
-  const validationErrorMap = new Map();
-
   // Store customer input list in a map in order to maintain document position
   // as the list gets processed.
   const customerInputMap = new Map(Object.entries(customerInputList));
@@ -165,29 +158,25 @@ customerSchema.statics.updateCustomers = async function ({
     )
   );
 
-  // Apply the update and validate each customer.
+  // Apply the update to each customer.
   for (const [index, customerInput] of customerInputMap.entries()) {
-    try {
-      const document = customerDocMap.get(index);
-      // Apply the update to the mongoose document.
-      document.set(customerInput);
-      // Validate the mongoose document
-      await document.validate();
-    } catch (validationError) {
-      validationErrorMap.set(index, validationError);
-    }
+    const document = customerDocMap.get(index);
+    // Apply the update to the mongoose document.
+    document.set(customerInput);
+    // Validate the mongoose document
+    // await document.validate();
   }
 
-  if (validationErrorMap.size > 0) {
-    throw validationErrorMap;
-  } else {
-    // No error.
-    // Save the customer updates and return the documents to the client
-    for (const document of customerDocMap.values()) {
-      await document.save();
-    }
-    return Array.from(customerDocMap.values());
+  await this.validate({
+    customerDocumentList: Array.from(customerDocMap.values()),
+  });
+
+  // No error.
+  // Save the customer updates and return the documents to the client
+  for (const document of customerDocMap.values()) {
+    await document.save();
   }
+  return Array.from(customerDocMap.values());
 };
 
 /**
