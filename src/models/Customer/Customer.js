@@ -66,6 +66,9 @@ customerSchema.statics.validate = async function (
   // Iterate through customerInputList and validate each document, storing
   // any errors in errorMap
   for (const [index, customer] of customerDocumentList.entries()) {
+    if (!(customer instanceof this)) {
+      throw new Error("Input must be instance of Customer.");
+    }
     // Validate document.
     try {
       await customer.validate({ pathsToSkip });
