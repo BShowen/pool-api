@@ -130,7 +130,9 @@ customerSchema.statics.deleteCustomer = async function ({
 };
 
 /**
- *
+ * Update a list of customers.
+ * Return the updated documents if successfully updated.
+ * Throw a list of errors if there are any errors.
  */
 customerSchema.statics.updateCustomers = async function ({
   customerInputList,
@@ -171,8 +173,8 @@ customerSchema.statics.updateCustomers = async function ({
       document.set(customerInput);
       // Validate the mongoose document
       await document.validate();
-    } catch (error) {
-      validationErrorMap.set(index, MongooseUtil.formatMongooseError(error));
+    } catch (validationError) {
+      validationErrorMap.set(index, validationError);
     }
   }
 

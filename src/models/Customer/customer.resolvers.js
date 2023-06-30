@@ -19,7 +19,15 @@ export default {
           throw new GraphQLError(ERROR_CODES.MONGOOSE_VALIDATION_ERROR, {
             extensions: {
               code: ERROR_CODES.MONGOOSE_VALIDATION_ERROR,
-              fields: Object.fromEntries(error.entries()),
+              fields: Object.fromEntries(
+                Array.from(error.entries()).map((validationObj) => {
+                  const [position, validationError] = validationObj;
+                  return [
+                    position,
+                    MongooseUtil.formatMongooseError(validationError),
+                  ];
+                })
+              ),
             },
           });
         } else {
