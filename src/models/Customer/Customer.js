@@ -90,10 +90,17 @@ customerSchema.statics.createCustomers = async function ({
   customerInputList,
 }) {
   /**
+   * Convert the customerInputList from an array of input objects to an array
+   * of instantiated customer documents
+   */
+  const customerDocumentList = customerInputList.map((input) => {
+    return new this(input);
+  });
+  /**
    * Validate input. This will throw a list of errors, if any, and the
    * resolver will handle it.
    */
-  await this.validate({ customerInputList });
+  await this.validate({ customerDocumentList });
   /**
    * Iterate through the customerInputList and create a new customer for each
    * object in the list
