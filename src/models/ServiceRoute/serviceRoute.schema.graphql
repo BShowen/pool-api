@@ -1,23 +1,23 @@
 type ServiceRoute {
   "A list of customers in this route"
-  customerAccounts: [CustomerAccount]!
+  customerAccounts: [ServiceRouteCustomerAccount]!
   "The technician associated with this route"
-  technician: User
+  technician: Technician
   count: Int
 }
 
 type ServiceRouteGrouped {
   serviceDay: String
-  customerAccounts: [CustomerAccount]!
+  customerAccounts: [ServiceRouteCustomerAccount]!
   total: Float
   count: Int
 }
 
 type Query {
-  "Get a list of service routes grouped by technician"
-  serviceRouteList: [ServiceRoute]!
-  "Get service route for the currently logged in user. Customer accounts grouped by service day"
-  serviceRouteListGrouped: [ServiceRouteGrouped]!
-  "Get a service route for a particular week day"
-  getServiceRoute: ServiceRoute
+  "Get all service routes associated with the company. Grouped by technician."
+  serviceRouteAll: [ServiceRoute]!
+  "Get all service routes associated with the currently logged in user."
+  serviceRouteWeek: [ServiceRouteGrouped]!
+  "Get today's service route associated with the currently logged in user."
+  serviceRouteToday: ServiceRoute
 }
