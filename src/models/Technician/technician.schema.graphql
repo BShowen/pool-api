@@ -1,0 +1,41 @@
+type Technician {
+  id: ID
+  firstName: String
+  lastName: String
+  emailAddress: String
+  password: String
+  registrationSecret: String
+  roles: [String]
+}
+
+input NewTechnician {
+  firstName: String!
+  lastName: String!
+  emailAddress: String!
+  registrationUrl: String!
+}
+
+input UpdateTechnician {
+  id: ID!
+  firstName: String
+  lastName: String
+  emailAddress: String
+  registrationUrl: String
+  password: String
+}
+
+type Query {
+  "Get a list of technicians"
+  technicianList: [Technician]!
+  "Get a specific technician"
+  technician(technicianId: ID!, registrationSecret: ID): Technician
+}
+
+type Mutation {
+  "Create a new technician"
+  newTechnician(input: NewTechnician): Technician!
+  "Update a technician"
+  updateTechnician(input: UpdateTechnician): Technician!
+  "Delete a technician"
+  deleteTechnician(technicianId: ID): Technician!
+}
