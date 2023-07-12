@@ -234,6 +234,12 @@ customerAccountSchema.static(
   }
 );
 
+// Check if a customerAccount exists.
+// Return true or false.
+customerAccountSchema.statics.exists = async function ({ query }) {
+  return await this.countDocuments(query);
+};
+
 customerAccountSchema.post("deleteAccount", async function (account, next) {
   /**
    * Delete each accountOwner associated with this account AFTER the static
