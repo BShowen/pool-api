@@ -11,7 +11,7 @@ const Schema = mongoose.Schema;
 // Local modules
 import User from "../User/User.js";
 import roles from "../../utils/roles.js";
-import { MongooseUtil } from "../../utils/MongooseUtil.js";
+import { validateMongooseId } from "../../utils/validateMongooseId.js";
 
 const customerSchema = new Schema({
   phoneNumber: {
@@ -124,7 +124,7 @@ customerSchema.statics.deleteCustomer = async function ({
   companyId,
   customerId,
 }) {
-  MongooseUtil.validateMongooseId([companyId, customerId]);
+  validateMongooseId([companyId, customerId]);
 
   // Delete the customer
   const document = await this.findOneAndDelete({
@@ -149,9 +149,7 @@ customerSchema.statics.updateCustomers = async function ({
   company,
 }) {
   // Validate ALL customer id's first.
-  MongooseUtil.validateMongooseId(
-    customerInputList.map((customer) => customer.id)
-  );
+  validateMongooseId(customerInputList.map((customer) => customer.id));
 
   // Store customer input list in a map in order to maintain document position
   // as the list gets processed.

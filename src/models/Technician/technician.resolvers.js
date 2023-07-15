@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { GraphQLError } from "graphql";
 
 import sendUserSignupEmail from "../../utils/courier.js";
-import { MongooseUtil } from "../../utils/MongooseUtil.js";
+import { validateMongooseId } from "../../utils/validateMongooseId.js";
 import { ValidationError } from "../../utils/ValidationError.js";
 
 export default {
@@ -28,7 +28,7 @@ export default {
         user.authenticateAndAuthorize({ role: "MANAGER" });
         return await Technician.getTechnician({
           technicianId,
-          companyId: c._id,
+          companyId: user.c_id,
         });
       }
     },
@@ -78,7 +78,7 @@ export default {
       user.authenticateAndAuthorize({ role: "ADMIN" });
       const { Technician, CustomerAccount } = models;
       // Check that technician isn't assigned to customer accounts.
-      MongooseUtil.validateMongooseId([user.c_id, technicianId]);
+      validateMongooseId([user.c_id, technicianId]);
       const exists = await CustomerAccount.exists({
         query: {
           company: new mongoose.Types.ObjectId(user.c_id),

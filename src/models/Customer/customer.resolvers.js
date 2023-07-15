@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { MongooseUtil } from "../../utils/MongooseUtil.js";
+import { validateMongooseId } from "../../utils/validateMongooseId.js";
 import { ValidationError } from "../../utils/ValidationError.js";
 export default {
   Mutation: {
@@ -24,13 +24,13 @@ export default {
     newCustomers: async (_, { input }, { user, models }) => {
       user.authenticateAndAuthorize({ role: "MANAGER" });
       const { customerList, account: accountId } = input;
-      const { Customer } = models;
+      const { Customer, CustomerAccount } = models;
 
       /**
        * Validate that the customerAccount (Parent document) exists.
        */
-      MongooseUtil.validateMongooseId(accountId);
-      const count = await mongoose.models.CustomerAccount.countDocuments({
+      validateMongooseId(accountId);
+      const count = await CustomerAccount.countDocuments({
         _id: new mongoose.Types.ObjectId(accountId),
       });
       if (count == 0) {

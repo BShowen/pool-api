@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
-import { MongooseUtil } from "../../utils/MongooseUtil.js";
+import { validateMongooseId } from "../../utils/validateMongooseId.js";
 
 const customerAccountSchema = new Schema({
   accountName: {
@@ -142,7 +142,7 @@ customerAccountSchema.static(
 customerAccountSchema.static(
   "getCustomerAccountList",
   async function ({ companyId }) {
-    MongooseUtil.validateMongooseId(companyId);
+    validateMongooseId(companyId);
     return await this.find({
       company: new mongoose.Types.ObjectId(companyId),
     });
@@ -156,7 +156,7 @@ customerAccountSchema.static(
 customerAccountSchema.static(
   "getCustomerAccountById",
   async function ({ companyId, accountId }) {
-    MongooseUtil.validateMongooseId([accountId, companyId]);
+    validateMongooseId([accountId, companyId]);
     const customerAccount = await this.findOne({
       company: new mongoose.Types.ObjectId(companyId),
       _id: new mongoose.Types.ObjectId(accountId),
@@ -178,7 +178,7 @@ customerAccountSchema.static(
 customerAccountSchema.static(
   "deleteAccount",
   async function ({ companyId, accountId }) {
-    MongooseUtil.validateMongooseId(accountId);
+    validateMongooseId(accountId);
     // Delete and return the customer account
     const deletedDoc = await this.findOneAndDelete({
       _id: new mongoose.Types.ObjectId(accountId),
@@ -201,7 +201,7 @@ customerAccountSchema.static(
 customerAccountSchema.static(
   "updateCustomerAccount",
   async function ({ input, companyId }) {
-    MongooseUtil.validateMongooseId(input.id);
+    validateMongooseId(input.id);
     // Retrieve the account from the DB to perform the update.
     const customerAccount = await this.getCustomerAccountById({
       companyId,
@@ -213,7 +213,7 @@ customerAccountSchema.static(
       input.technician = null;
     } else if ("technician" in input && input.technician != 0) {
       // Validate the technician id.
-      MongooseUtil.validateMongooseId(input.technician);
+      validateMongooseId(input.technician);
       // verify technician exists.
       const count = await mongoose.models.Technician.countDocuments({
         _id: new mongoose.Types.ObjectId(input.technician),
