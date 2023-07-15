@@ -11,7 +11,6 @@ import bcrypt from "bcrypt";
 
 // local modules
 import roles from "../../utils/roles.js";
-import { ERROR_CODES } from "../../utils/ERROR_CODES.js";
 
 const userSchema = new Schema(
   {

@@ -1,5 +1,4 @@
 import { GraphQLError } from "graphql";
-import bcrypt from "bcrypt";
 
 import { ERROR_CODES } from "../../utils/ERROR_CODES.js";
 import signJwt from "../../utils/signJwt.js";
