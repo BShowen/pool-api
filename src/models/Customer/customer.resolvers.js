@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import { GraphQLError } from "graphql";
-import { ERROR_CODES } from "../../utils/ERROR_CODES.js";
 import { MongooseUtil } from "../../utils/MongooseUtil.js";
+import { ValidationError } from "../../utils/ValidationError.js";
 export default {
   Mutation: {
     updateCustomers: async (_, { input }, { user, models }) => {
@@ -16,20 +15,7 @@ export default {
         return documentList;
       } catch (error) {
         if (error instanceof Map) {
-          throw new GraphQLError(ERROR_CODES.MONGOOSE_VALIDATION_ERROR, {
-            extensions: {
-              code: ERROR_CODES.MONGOOSE_VALIDATION_ERROR,
-              fields: Object.fromEntries(
-                Array.from(error.entries()).map((validationObj) => {
-                  const [position, validationError] = validationObj;
-                  return [
-                    position,
-                    MongooseUtil.formatMongooseError(validationError),
-                  ];
-                })
-              ),
-            },
-          });
+          throw new ValidationError({ error });
         } else {
           throw error;
         }
@@ -65,20 +51,7 @@ export default {
         // mongoose validation errors. It will not be an instance of any Error
         // class.
         if (error instanceof Map) {
-          throw new GraphQLError(ERROR_CODES.MONGOOSE_VALIDATION_ERROR, {
-            extensions: {
-              code: ERROR_CODES.MONGOOSE_VALIDATION_ERROR,
-              fields: Object.fromEntries(
-                Array.from(error.entries()).map((validationObj) => {
-                  const [position, validationError] = validationObj;
-                  return [
-                    position,
-                    MongooseUtil.formatMongooseError(validationError),
-                  ];
-                })
-              ),
-            },
-          });
+          throw new ValidationError({ error });
         } else {
           throw error;
         }

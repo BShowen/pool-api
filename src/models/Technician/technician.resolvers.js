@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 import { GraphQLError } from "graphql";
 
 import sendUserSignupEmail from "../../utils/courier.js";
-import { ERROR_CODES } from "../../utils/ERROR_CODES.js";
 import { MongooseUtil } from "../../utils/MongooseUtil.js";
+import { ValidationError } from "../../utils/ValidationError.js";
 
 export default {
   Query: {
@@ -36,26 +36,17 @@ export default {
   Mutation: {
     newTechnician: async (_, { input }, { user, models }) => {
       user.authenticateAndAuthorize({ role: "MANAGER" });
-      const alreadyExists = await models.Technician.countDocuments({
-        emailAddress: input.emailAddress,
-      });
-      if (alreadyExists) {
-        throw new GraphQLError(ERROR_CODES.INVALID_USER_INPUT, {
-          extensions: {
-            fields: {
-              emailAddress: `A technician with "${input.emailAddress}" already exists.`,
-            },
-            code: ERROR_CODES.INVALID_USER_INPUT,
-          },
-        });
-      }
       // Associate the user to the currently logged in company account
       input.company = user.c_id;
       // Create the user registration secret.
       input.registrationSecret = new mongoose.Types.ObjectId();
       // Create and save the new user.
       const technician = new models.Technician(input);
-      await technician.save();
+      try {
+        await technician.save();
+      } catch (error) {
+        throw new ValidationError({ error });
+      }
 
       // ------------------------------------------------------------
       // Send email confirmation
@@ -80,12 +71,7 @@ export default {
           input,
         });
       } catch (error) {
-        throw new GraphQLError(ERROR_CODES.MONGOOSE_VALIDATION_ERROR, {
-          extensions: {
-            code: ERROR_CODES.MONGOOSE_VALIDATION_ERROR,
-            fields: MongooseUtil.formatMongooseError(error),
-          },
-        });
+        throw new ValidationError({ error });
       }
     },
     deleteTechnician: async (_, { technicianId }, { user, models }) => {
