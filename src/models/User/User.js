@@ -42,10 +42,13 @@ const userSchema = new Schema(
             // This rule is here for updating documents.
             if (!this.isModified("emailAddress")) return true;
 
-            const count = await mongoose.models.User.countDocuments({
+            const userCount = await mongoose.models.User.countDocuments({
               emailAddress,
             });
-            return count === 0;
+            const companyCount = await mongoose.models.Company.countDocuments({
+              email: emailAddress,
+            });
+            return userCount + companyCount === 0;
           },
           message: (props) => `${props.value} is taken.`,
         },
@@ -96,6 +99,7 @@ userSchema.statics.findByEmail = function ({ emailAddress }) {
  * Return true / false
  */
 userSchema.methods.authenticate = function ({ password }) {
+  if (!this.password) return false;
   return bcrypt.compareSync(password, this.password);
 };
 

@@ -1,9 +1,13 @@
 input SignUpInput {
+  company: CompanySignUpInput!
+  owner: OwnerInput!
+}
+
+input CompanySignUpInput {
   name: String!
   email: String!
   phoneNumber: String!
   address: String!
-  owner: OwnerInput!
 }
 
 input OwnerInput {

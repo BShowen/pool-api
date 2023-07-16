@@ -24,6 +24,11 @@ const technicianSchema = new Schema({
   },
 });
 
+technicianSchema.statics.validate = async function ({ input }, options = {}) {
+  const { pathsToSkip = [] } = options;
+  return await new this(input).validate({ pathsToSkip });
+};
+
 technicianSchema.statics.getTechnicianList = async function ({ companyId }) {
   validateMongooseId(companyId);
   return await this.find({

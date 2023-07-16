@@ -3,6 +3,8 @@ import { GraphQLError } from "graphql";
 import { ERROR_CODES } from "../../utils/ERROR_CODES.js";
 import signJwt from "../../utils/signJwt.js";
 
+import { ValidationError } from "../../utils/ValidationError.js";
+
 export default {
   Mutation: {
     login: async (_, { input }, { models }) => {
@@ -47,48 +49,63 @@ export default {
       }
     },
     signUp: async (_, { signUpInput }, { models }) => {
-      const { Company, User, Technician } = models;
-      // Check to make sure company email isn't in use.
-      const companyCount = await Company.countDocuments({
-        email: signUpInput.email.toLowerCase(),
-      });
-      if (companyCount > 0) {
-        throw new GraphQLError("That company email is already in use.");
+      const { Company, Technician } = models;
+
+      const validationErrors = new Map();
+
+      const companyInput = { ...signUpInput.company };
+      const ownerInput = signUpInput.owner;
+
+      // Validate the company input
+      try {
+        await Company.validate(
+          { input: companyInput },
+          { pathsToSkip: ["owner"] }
+        );
+      } catch (error) {
+        validationErrors.set("company", error);
       }
 
-      // Check to make sure user email isn't in use.
-      const userCount = await User.countDocuments({
-        emailAddress: signUpInput.owner.emailAddress.toLowerCase(),
-      });
-      if (userCount > 0) {
-        throw new GraphQLError("That email is already in use.");
+      try {
+        await Technician.validate(
+          { input: ownerInput },
+          { pathsToSkip: ["roles", "company"] }
+        );
+      } catch (error) {
+        validationErrors.set("owner", error);
       }
 
-      // -----------------------------------------------------------------------
-      // Create the User (Business owner)
-      const ownerInput = { ...signUpInput.owner, roles: ["ADMIN"] };
-      const owner = await new Technician(ownerInput);
-      // -----------------------------------------------------------------------
+      if (validationErrors.size > 0) {
+        return new ValidationError({ error: validationErrors });
+      }
 
-      // -----------------------------------------------------------------------
-      // Create Company
-      const companyInput = { ...signUpInput, owner: owner._id };
-      const company = await new Company(companyInput);
-      owner.set({ company: company._id });
-      await Promise.all([owner.save(), company.save()]);
-      const apiToken = signJwt(
-        {
-          u_id: owner._id,
-          c_id: company._id,
-          roles: owner.roles,
-          c_email: company.email,
-        },
-        {
-          expiresIn: process.env.JWT_MAX_AGE,
-        }
-      );
-      // -----------------------------------------------------------------------
-      return apiToken;
+      try {
+        // Create the User (Business owner)
+        const owner = await new Technician({ ...ownerInput, roles: ["ADMIN"] });
+        // Create Company
+        const company = await new Company({
+          ...companyInput,
+          owner: owner._id,
+        });
+        owner.set({ company: company._id });
+
+        await Promise.allSettled([owner.save(), company.save()]);
+
+        // return the JWT token
+        return signJwt(
+          {
+            u_id: owner._id,
+            c_id: company._id,
+            roles: owner.roles,
+            c_email: company.email,
+          },
+          {
+            expiresIn: process.env.JWT_MAX_AGE,
+          }
+        );
+      } catch (error) {
+        return new ValidationError({ error });
+      }
     },
   },
 };
