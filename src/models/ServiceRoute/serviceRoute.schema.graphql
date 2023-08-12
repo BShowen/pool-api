@@ -20,4 +20,6 @@ type Query {
   serviceRouteWeek: [ServiceRouteGrouped]!
   "Get today's service route associated with the currently logged in user."
   serviceRouteToday: ServiceRoute
+  "Get the service route for a particular technician"
+  serviceRouteByTechId(technicianId: ID!): [ServiceRouteGrouped]!
 }

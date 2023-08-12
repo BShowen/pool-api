@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+
+import { validateMongooseId } from "../../utils/validateMongooseId.js";
 export default {
   Query: {
     serviceRouteAll: async (_, __, { models, user }) => {
@@ -158,6 +160,44 @@ export default {
         customerAccounts: filtered,
         count,
       };
+    },
+    serviceRouteByTechId: async (_, { technicianId }, context) => {
+      const { user, models } = context;
+      user.authenticateAndAuthorize({ role: "TECH" });
+      validateMongooseId(technicianId);
+      const routes = await models.CustomerAccount.aggregate([
+        {
+          $match: {
+            technician: new mongoose.Types.ObjectId(technicianId),
+            company: new mongoose.Types.ObjectId(user.c_id),
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "account",
+            as: "accountOwners",
+          },
+        },
+        {
+          $group: {
+            _id: "$serviceDay",
+            customerAccounts: { $push: "$$ROOT" },
+            total: { $sum: "$price" },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            serviceDay: "$_id",
+            customerAccounts: 1,
+            total: 1,
+            count: 1,
+          },
+        },
+      ]);
+      return routes;
     },
   },
   ServiceRouteGrouped: {
