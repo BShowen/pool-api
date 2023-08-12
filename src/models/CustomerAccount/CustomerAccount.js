@@ -32,6 +32,7 @@ const customerAccountSchema = new Schema({
   price: {
     type: Number,
     required: [true, "Monthly price is required."],
+    min: [1, "Price is required."],
   },
   company: {
     type: mongoose.Types.ObjectId,
