@@ -18,6 +18,7 @@ type PoolReport {
   tablets: ChemicalLog
   salt: ChemicalLog
   notes: String
+  date: Date
 }
 
 type ChemicalLog {

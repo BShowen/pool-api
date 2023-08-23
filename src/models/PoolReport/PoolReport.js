@@ -57,10 +57,12 @@ const poolReportSchema = new Schema({
       unit: { type: String, trim: true },
     },
   },
-
   notes: {
     type: String,
     trim: true,
+  },
+  date: {
+    type: Date,
   },
 });
 

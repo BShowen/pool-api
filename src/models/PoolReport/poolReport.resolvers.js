@@ -29,6 +29,7 @@ export default {
         }
         // Create the pool report.
         const poolReport = new PoolReport(input);
+        await poolReport.set({ date: new Date().getTime() });
         // Save the pool report.
         return await poolReport.save();
       } catch (error) {
