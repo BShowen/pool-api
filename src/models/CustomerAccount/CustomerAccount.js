@@ -237,8 +237,11 @@ customerAccountSchema.static(
 
 // Check if a customerAccount exists.
 // Return true or false.
+// query is the query to be applied to the search.
+// {query: { company: "companyId", id: "customerAccountId" } }
 customerAccountSchema.statics.exists = async function ({ query }) {
-  return await this.countDocuments(query);
+  if (!query) return 0; // Do not execute a search without a query.
+  return (await this.countDocuments(query)) > 0;
 };
 
 customerAccountSchema.post("deleteAccount", async function (account, next) {
