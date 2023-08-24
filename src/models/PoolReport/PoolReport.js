@@ -29,7 +29,7 @@ const poolReportSchema = new Schema({
       unit: { type: String, trim: true },
     },
   },
-  ph: {
+  pH: {
     test: { type: Number, trim: true, min: 0 },
     add: {
       quantity: { type: Number, min: 0, trim: true },
