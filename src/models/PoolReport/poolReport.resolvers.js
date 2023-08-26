@@ -8,29 +8,34 @@ export default {
   Mutation: {
     createChemicalLog: async (_, { input }, { user, models }) => {
       // Verify the user is logged in and authorized to make pool reports.
-      user.authenticateAndAuthorize({ role: "MANAGER" });
-      // Validate the customerAccountId.
-      const { customerAccountId } = input;
-      validateMongooseId([customerAccountId]);
+      user.authenticateAndAuthorize({ role: "TECH" });
 
-      const { PoolReport, CustomerAccount } = models;
+      // Validate the customerAccountId.
+      validateMongooseId(input.customerAccountId);
+
       try {
+        const { PoolReport, CustomerAccount } = models;
         // Verify that the ID belongs to a customerAccount
         const customerAccountExists = await CustomerAccount.exists({
           query: {
             company: new mongoose.Types.ObjectId(user.c_id),
-            _id: new mongoose.Types.ObjectId(customerAccountId),
+            _id: new mongoose.Types.ObjectId(input.customerAccountId),
           },
         });
         if (!customerAccountExists) {
           throw new Error(
-            `A customer account with ID ${customerAccountId} cannot be found.`
+            `Customer account id "${input.customerAccountId}" is not valid.`
           );
         }
-        // Create the pool report.
+        // Instantiate the pool report.
         const poolReport = new PoolReport(input);
-        await poolReport.set({ date: new Date().getTime() });
-        // Save the pool report.
+        // Set the DateTime on the pool report.
+        // Note: The DateTime is being saved as the server's DateTime. This may
+        // present an issue if the timezone of the server and user are different.
+        poolReport.set({ date: new Date().getTime() });
+        // Set the companyId on the pool report.
+        poolReport.set({ companyId: user.c_id });
+        // Save and return the pool report.
         return await poolReport.save();
       } catch (error) {
         throw new GraphQLError(error.message);

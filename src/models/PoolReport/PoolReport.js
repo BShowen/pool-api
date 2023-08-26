@@ -8,6 +8,11 @@ const poolReportSchema = new Schema({
     ref: "CustomerAccount",
     required: [true, "Pool report customer account is required."],
   },
+  companyId: {
+    type: mongoose.Types.ObjectId,
+    ref: "Company",
+    required: [true, "A company is required to create a chemical log."],
+  },
   alkalinity: {
     test: { type: Number, trim: true, min: 0 },
     add: {
