@@ -65,3 +65,8 @@ type Mutation {
   "Create a new chemical log."
   createChemicalLog(input: PoolReportInput): PoolReport!
 }
+
+type Query {
+  "Get a list of pool reports"
+  getPoolReportList: [PoolReport]!
+}

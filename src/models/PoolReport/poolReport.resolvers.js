@@ -2,9 +2,24 @@
 import { GraphQLError } from "graphql";
 
 import { validateMongooseId } from "../../utils/validateMongooseId.js";
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 
 export default {
+  Query: {
+    getPoolReportList: async (_, __, { user, models }) => {
+      // Verify the user is logged in and authorized to make pool reports.
+      user.authenticateAndAuthorize({ role: "TECH" });
+
+      try {
+        const { PoolReport } = models;
+        return await PoolReport.find({
+          companyId: new mongoose.Types.ObjectId(user.c_id),
+        });
+      } catch (error) {
+        throw new GraphQLError(error.message);
+      }
+    },
+  },
   Mutation: {
     createChemicalLog: async (_, { input }, { user, models }) => {
       // Verify the user is logged in and authorized to make pool reports.
