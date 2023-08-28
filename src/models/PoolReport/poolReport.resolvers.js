@@ -19,6 +19,48 @@ export default {
         throw new GraphQLError(error.message);
       }
     },
+    getPoolReportListForCustomerAccount: async (
+      _,
+      { accountId },
+      { user, models }
+    ) => {
+      // Verify the user is logged in and authorized to make pool reports.
+      user.authenticateAndAuthorize({ role: "TECH" });
+
+      // Validate the customerAccountId.
+      validateMongooseId(accountId);
+
+      try {
+        const { PoolReport } = models;
+        return await PoolReport.find({
+          customerAccountId: new mongoose.Types.ObjectId(accountId),
+          companyId: new mongoose.Types.ObjectId(user.c_id),
+        });
+      } catch (error) {
+        throw new GraphQLError(error.message);
+      }
+    },
+    getLatestPoolReportForCustomerAccount: async (
+      _,
+      { accountId },
+      { user, models }
+    ) => {
+      // Verify the user is logged in and authorized to make pool reports.
+      user.authenticateAndAuthorize({ role: "TECH" });
+
+      // Validate the customerAccountId.
+      validateMongooseId(accountId);
+
+      try {
+        const { PoolReport } = models;
+        return await PoolReport.findOne({
+          customerAccountId: new mongoose.Types.ObjectId(accountId),
+          companyId: new mongoose.Types.ObjectId(user.c_id),
+        }).sort({ date: -1 });
+      } catch (error) {
+        throw new GraphQLError(error.message);
+      }
+    },
   },
   Mutation: {
     createChemicalLog: async (_, { input }, { user, models }) => {

@@ -67,6 +67,10 @@ type Mutation {
 }
 
 type Query {
-  "Get a list of pool reports"
+  "Get a list of all pool reports."
   getPoolReportList: [PoolReport]!
+  "Get a list of all pool reports associated with a specific customer account."
+  getPoolReportListForCustomerAccount(accountId: ID!): [PoolReport]!
+  "Get the most recent pool report for a customer account"
+  getLatestPoolReportForCustomerAccount(accountId: ID!): PoolReport
 }
