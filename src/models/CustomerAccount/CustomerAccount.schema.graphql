@@ -24,6 +24,8 @@ type ServiceRouteCustomerAccount {
   price: Float
   id: ID
   accountOwners: [Customer]!
+  latestPoolReport: PoolReport
+  poolReports: [PoolReport]!
 }
 
 input CustomerAccountInput {
