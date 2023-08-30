@@ -105,6 +105,30 @@ customerAccountSchema.virtual("accountOwners", {
   justOne: false,
 });
 
+customerAccountSchema.virtual("latestPoolReport", {
+  ref: "PoolReport", // Reference to the PoolReport model
+  localField: "_id", // Field in the CustomerAccount model
+  foreignField: "customerAccountId", // Field in the PoolReport model
+  options: {
+    sort: {
+      date: -1,
+    },
+    limit: 1,
+  }, // Sort by date in descending order and limit to 1
+  justOne: true, // Return only one document
+});
+
+customerAccountSchema.virtual("poolReports", {
+  ref: "PoolReport", // Reference to the PoolReport model
+  localField: "_id", // Field in the CustomerAccount model
+  foreignField: "customerAccountId", // Field in the PoolReport model
+  options: {
+    sort: {
+      date: -1,
+    },
+  }, // Sort by date in descending order
+});
+
 /**
  * All static methods on this model will attempt to perform their respective
  * process. Errors are not handled or even detected. If the static method fails,
@@ -268,6 +292,8 @@ customerAccountSchema.post("findOne", async function (doc, next) {
   if (doc) {
     await doc.populate("accountOwners");
     await doc.populate("technician");
+    await doc.populate("poolReports");
+    await doc.populate("latestPoolReport");
   }
   next();
 });
@@ -276,6 +302,8 @@ customerAccountSchema.post("find", async function (docs, next) {
     for (const doc of docs) {
       await doc.populate("accountOwners");
       await doc.populate("technician");
+      await doc.populate("poolReports");
+      await doc.populate("latestPoolReport");
     }
   }
   next();

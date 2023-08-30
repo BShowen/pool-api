@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 import { validateMongooseId } from "../../utils/validateMongooseId.js";
+import { extractQueryFieldSelection } from "../../utils/extractQueryFieldSelection.js";
 export default {
   Query: {
     serviceRouteAll: async (_, __, { models, user }) => {
@@ -94,16 +95,18 @@ export default {
       return routes;
     },
     serviceRouteToday: async (_, __, { user, models }) => {
+      user.authenticateAndAuthorize({ role: "TECH" });
+
       const { CustomerAccount, Technician } = models;
+
       const formatter = new Intl.DateTimeFormat("en-US", {
         year: "numeric",
         month: "numeric",
         day: "numeric",
       });
+
       // today = "06/07/2023" or "01/13/2023" etc
       const today = formatter.format(new Date()).toLowerCase();
-
-      user.authenticateAndAuthorize({ role: "TECH" });
 
       // Get all customers
       // where serviceDay === today
@@ -129,17 +132,17 @@ export default {
        * already been serviced and
        */
       const filtered = customerAccounts.filter((customerAccount) => {
-        if (customerAccount.poolReports) {
+        if (customerAccount.poolReports.length > 0) {
+          // If the customerAccount has pool reports, then determine whether or
+          // not to keep the customerAccount.
+
           // Get the most recent pool report.
-          const poolReport =
-            customerAccount.poolReports[customerAccount.poolReports.length - 1];
-          // No pool report, keep this customer. We need to create a pool report
-          if (!poolReport) return true;
+          // await customerAccount.populate("latestPoolReport");
+          const poolReport = customerAccount.latestPoolReport;
 
           /**
-           * There is a pool report. If the date on the pool report is todays
-           * date then we don't want to keep this customer as they have already
-           * been serviced today.
+           * If the date on the pool report is todays date then we don't want
+           * to keep this customer as they have already been serviced today.
            */
           const poolReportDate = formatter.format(poolReport.date);
           if (poolReportDate === today) {
@@ -148,13 +151,16 @@ export default {
             return true; //Keep this customer
           }
         } else {
+          // If no pool reports on the customerAccount then this is the first
+          // time servicing this customer and they should be kept in the list.
+          // Also, there is no need to populate the "latestPoolReport" field as
+          // there are no pool reports.
           return true;
         }
       });
 
       const technician = await Technician.findOne({ _id: user.u_id });
-      const count = customerAccounts.length;
-
+      const count = filtered.length;
       return {
         ...technician._doc,
         customerAccounts: filtered,
