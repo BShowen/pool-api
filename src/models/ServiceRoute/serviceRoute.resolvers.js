@@ -132,7 +132,7 @@ export default {
        * already been serviced and
        */
       const filtered = customerAccounts.filter((customerAccount) => {
-        if (customerAccount.poolReports) {
+        if (customerAccount.poolReports.length > 0) {
           // If the customerAccount has pool reports, then determine whether or
           // not to keep the customerAccount.
 
