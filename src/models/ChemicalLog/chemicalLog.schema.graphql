@@ -1,0 +1,76 @@
+# chlorine: { test: 2.0, add: { unit: "lb", quantity: 5.0 } },
+# ph: { test: 7.2, add: { unit: "cups", quantity: 3 } },
+# alkalinity: { test: 70, add: { unit: "lb", quantity: 4.0 } },
+# stabilizer: { test: 25, add: { unit: "lb", quantity: 2.5 } },
+# calcium: { test: 150, add: { unit: "lb", quantity: 6 } },
+# tablets: { test: 1, add: { unit: "lb", quantity: 2.0 } },
+# salt: { test: 2900, add: { unit: "lb", quantity: 80 } },
+# notes: "",
+
+type ChemicalLog {
+  id: ID
+  customerAccountId: ID
+  chlorine: ChemicalTest
+  pH: ChemicalTest
+  alkalinity: ChemicalTest
+  stabilizer: ChemicalTest
+  calcium: ChemicalTest
+  tablets: ChemicalTest
+  salt: ChemicalTest
+  notes: String
+  date: Date
+}
+
+type ChemicalTest {
+  "Tested chemical reading."
+  test: Float
+  "The chemicals added, if any."
+  add: ChemicalAdd
+}
+
+type ChemicalAdd {
+  "The unit of unit of measurement."
+  unit: String
+  "How much chemical was added."
+  quantity: Float
+}
+
+input ChemicalLogInput {
+  customerAccountId: ID!
+  chlorine: ChemicalTestInput
+  pH: ChemicalTestInput
+  alkalinity: ChemicalTestInput
+  stabilizer: ChemicalTestInput
+  calcium: ChemicalTestInput
+  tablets: ChemicalTestInput
+  salt: ChemicalTestInput
+  notes: String
+}
+
+input ChemicalTestInput {
+  "Tested chemical reading."
+  test: Float
+  "The chemicals added, if any."
+  add: ChemicalAddInput
+}
+
+input ChemicalAddInput {
+  "The unit of unit of measurement."
+  unit: String
+  "How much chemical was added."
+  quantity: Float
+}
+
+type Mutation {
+  "Create a new chemical log."
+  createChemicalLog(input: ChemicalLogInput): ChemicalLog!
+}
+
+type Query {
+  "Get a list of all chemical logs."
+  getChemicalLogList: [ChemicalLog]!
+  "Get a list of all chemical logs associated with a specific customer account."
+  getChemicalLogListForCustomerAccount(accountId: ID!): [ChemicalLog]!
+  "Get the most recent chemical log for a customer account"
+  getLatestChemicalLogForCustomerAccount(accountId: ID!): ChemicalLog
+}

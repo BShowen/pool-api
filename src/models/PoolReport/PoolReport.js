@@ -13,62 +13,31 @@ const poolReportSchema = new Schema({
     ref: "Company",
     required: [true, "A company is required to create a chemical log."],
   },
-  alkalinity: {
-    test: { type: Number, trim: true, min: 0 },
-    add: {
-      quantity: { type: Number, min: 0, trim: true },
-      unit: { type: String, trim: true },
-    },
+  date: {
+    type: Date,
   },
-  calcium: {
-    test: { type: Number, trim: true, min: 0 },
-    add: {
-      quantity: { type: Number, min: 0, trim: true },
-      unit: { type: String, trim: true },
-    },
+  chemicalLog: {
+    type: mongoose.Types.ObjectId,
+    ref: "ChemicalLog",
+    required: [true, "A chemical log is required on a pool report."],
   },
-  chlorine: {
-    test: { type: Number, trim: true, min: 0 },
-    add: {
-      quantity: { type: Number, min: 0, trim: true },
-      unit: { type: String, trim: true },
-    },
-  },
-  pH: {
-    test: { type: Number, trim: true, min: 0 },
-    add: {
-      quantity: { type: Number, min: 0, trim: true },
-      unit: { type: String, trim: true },
-    },
-  },
-  salt: {
-    test: { type: Number, trim: true, min: 0 },
-    add: {
-      quantity: { type: Number, min: 0, trim: true },
-      unit: { type: String, trim: true },
-    },
-  },
-  stabilizer: {
-    test: { type: Number, trim: true, min: 0 },
-    add: {
-      quantity: { type: Number, min: 0, trim: true },
-      unit: { type: String, trim: true },
-    },
-  },
-  tablets: {
-    test: { type: Number, trim: true, min: 0 },
-    add: {
-      quantity: { type: Number, min: 0, trim: true },
-      unit: { type: String, trim: true },
-    },
+  workLog: {
+    brushPool: Boolean,
+    emptySkimmerBasket: Boolean,
+    emptyPumpBasket: Boolean,
+    cleanFilter: Boolean,
+    cleanTile: Boolean,
   },
   notes: {
     type: String,
     trim: true,
   },
-  date: {
-    type: Date,
-  },
+});
+
+poolReportSchema.post("save", async function (doc, next) {
+  // After a PoolReport is saved, populate it's chemicalLog field.
+  await doc.populate("chemicalLog");
+  next();
 });
 
 export default mongoose.model("PoolReport", poolReportSchema);

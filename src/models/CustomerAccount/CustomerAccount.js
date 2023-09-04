@@ -63,39 +63,6 @@ const customerAccountSchema = new Schema({
   //     // equipment info in the future.
   //   },
   // },
-  // poolReports: [
-  //   {
-  //     // <PoolReport>
-  //     date: Date,
-  //     chemicalsTested: {
-  //       chlorine: Number,
-  //       pH: Number,
-  //       alkalinity: Number,
-  //       stabilizer: Number,
-  //       calciumHardness: Number,
-  //       salt: Number,
-  //       phosphates: Number,
-  //     },
-  //     chemicalsAdded: {
-  //       chlorine: String,
-  //       acid: Number,
-  //       sodiumBicarb: Number,
-  //       stabilizer: Number,
-  //       calciumHardness: Number,
-  //       salt: Number,
-  //       tablets: Number,
-  //       phosphateRemover: Number,
-  //       diatomaceousEarth: Number,
-  //     },
-  //     workPerformed: {
-  //       brush: Boolean,
-  //       skimmerBasket: Boolean,
-  //       pumpBasket: Boolean,
-  //       filter: Boolean,
-  //     },
-  //     notes: String,
-  //   },
-  // ],
 });
 
 customerAccountSchema.virtual("accountOwners", {
@@ -105,10 +72,10 @@ customerAccountSchema.virtual("accountOwners", {
   justOne: false,
 });
 
-customerAccountSchema.virtual("latestPoolReport", {
-  ref: "PoolReport", // Reference to the PoolReport model
+customerAccountSchema.virtual("latestChemicalLog", {
+  ref: "ChemicalLog", // Reference to the ChemicalLog model
   localField: "_id", // Field in the CustomerAccount model
-  foreignField: "customerAccountId", // Field in the PoolReport model
+  foreignField: "customerAccountId", // Field in the ChemicalLog model
   options: {
     sort: {
       date: -1,
@@ -118,10 +85,10 @@ customerAccountSchema.virtual("latestPoolReport", {
   justOne: true, // Return only one document
 });
 
-customerAccountSchema.virtual("poolReports", {
-  ref: "PoolReport", // Reference to the PoolReport model
+customerAccountSchema.virtual("chemicalLogs", {
+  ref: "ChemicalLog", // Reference to the ChemicalLog model
   localField: "_id", // Field in the CustomerAccount model
-  foreignField: "customerAccountId", // Field in the PoolReport model
+  foreignField: "customerAccountId", // Field in the ChemicalLog model
   options: {
     sort: {
       date: -1,
@@ -292,8 +259,8 @@ customerAccountSchema.post("findOne", async function (doc, next) {
   if (doc) {
     await doc.populate("accountOwners");
     await doc.populate("technician");
-    await doc.populate("poolReports");
-    await doc.populate("latestPoolReport");
+    await doc.populate("chemicalLogs");
+    await doc.populate("latestChemicalLog");
   }
   next();
 });
@@ -302,8 +269,8 @@ customerAccountSchema.post("find", async function (docs, next) {
     for (const doc of docs) {
       await doc.populate("accountOwners");
       await doc.populate("technician");
-      await doc.populate("poolReports");
-      await doc.populate("latestPoolReport");
+      await doc.populate("chemicalLogs");
+      await doc.populate("latestChemicalLog");
     }
   }
   next();

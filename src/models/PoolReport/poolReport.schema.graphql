@@ -1,76 +1,36 @@
-# chlorine: { test: 2.0, add: { unit: "lb", quantity: 5.0 } },
-# ph: { test: 7.2, add: { unit: "cups", quantity: 3 } },
-# alkalinity: { test: 70, add: { unit: "lb", quantity: 4.0 } },
-# stabilizer: { test: 25, add: { unit: "lb", quantity: 2.5 } },
-# calcium: { test: 150, add: { unit: "lb", quantity: 6 } },
-# tablets: { test: 1, add: { unit: "lb", quantity: 2.0 } },
-# salt: { test: 2900, add: { unit: "lb", quantity: 80 } },
-# notes: "",
-
 type PoolReport {
-  id: ID
   customerAccountId: ID
-  chlorine: ChemicalLog
-  pH: ChemicalLog
-  alkalinity: ChemicalLog
-  stabilizer: ChemicalLog
-  calcium: ChemicalLog
-  tablets: ChemicalLog
-  salt: ChemicalLog
-  notes: String
+  companyId: ID
   date: Date
+  chemicalLog: ChemicalLog
+  workLog: WorkLog
+  notes: String
 }
 
-type ChemicalLog {
-  "Tested chemical reading."
-  test: Float
-  "The chemicals added, if any."
-  add: ChemicalAdded
-}
-
-type ChemicalAdded {
-  "The unit of unit of measurement."
-  unit: String
-  "How much chemical was added."
-  quantity: Float
+type WorkLog {
+  brushPool: Boolean
+  emptySkimmerBasket: Boolean
+  emptyPumpBasket: Boolean
+  cleanFilter: Boolean
+  cleanTile: Boolean
 }
 
 input PoolReportInput {
   customerAccountId: ID!
-  chlorine: ChemicalLogInput
-  pH: ChemicalLogInput
-  alkalinity: ChemicalLogInput
-  stabilizer: ChemicalLogInput
-  calcium: ChemicalLogInput
-  tablets: ChemicalLogInput
-  salt: ChemicalLogInput
+  chemicalLog: ID! #The ID that references an already saved chemical log
+  workLog: WorkLogInput!
   notes: String
 }
 
-input ChemicalLogInput {
-  "Tested chemical reading."
-  test: Float
-  "The chemicals added, if any."
-  add: ChemicalAddedInput
-}
-
-input ChemicalAddedInput {
-  "The unit of unit of measurement."
-  unit: String
-  "How much chemical was added."
-  quantity: Float
+input WorkLogInput {
+  brushPool: Boolean!
+  emptySkimmerBasket: Boolean!
+  emptyPumpBasket: Boolean!
+  cleanFilter: Boolean!
+  cleanTile: Boolean!
 }
 
 type Mutation {
-  "Create a new chemical log."
-  createChemicalLog(input: PoolReportInput): PoolReport!
-}
-
-type Query {
-  "Get a list of all pool reports."
-  getPoolReportList: [PoolReport]!
-  "Get a list of all pool reports associated with a specific customer account."
-  getPoolReportListForCustomerAccount(accountId: ID!): [PoolReport]!
-  "Get the most recent pool report for a customer account"
-  getLatestPoolReportForCustomerAccount(accountId: ID!): PoolReport
+  "Create and return a new pool report."
+  createPoolReport(input: PoolReportInput!): PoolReport!
 }
