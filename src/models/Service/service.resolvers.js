@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 
 // Local modules
 import { ValidationError } from "../../utils/ValidationError.js";
+import { validateMongooseId } from "../../utils/validateMongooseId.js";
 
 export default {
   Query: {
@@ -39,6 +40,24 @@ export default {
         } else {
           throw new GraphQLError(error.message);
         }
+      }
+    },
+    deleteService: async (_, { serviceId }, { models, user }) => {
+      // Verify the user is logged in and authorized to create services.
+      user.authenticateAndAuthorize({ role: "ADMIN" });
+
+      validateMongooseId(serviceId);
+
+      try {
+        const { Service } = models;
+        return (
+          (await Service.findOneAndDelete({
+            companyId: new mongoose.Types.ObjectId(user.c_id),
+            _id: new mongoose.Types.ObjectId(serviceId),
+          })) || new Error(`A service with id ${serviceId} cannot be found.`)
+        );
+      } catch (error) {
+        throw new GraphQLError(error.message);
       }
     },
   },
