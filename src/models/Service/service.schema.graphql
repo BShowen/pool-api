@@ -1,0 +1,17 @@
+type Service {
+  name: String
+  description: String
+}
+
+input ServiceInput {
+  name: String!
+  description: String
+}
+
+type Mutation {
+  createNewService(input: ServiceInput): Service
+}
+
+type Query {
+  getAllServices: [Service]!
+}

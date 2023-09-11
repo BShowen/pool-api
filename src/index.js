@@ -22,6 +22,7 @@ import Technician from "./models/Technician/Technician.js";
 import Customer from "./models/Customer/Customer.js";
 import PoolReport from "./models/PoolReport/PoolReport.js";
 import ChemicalLog from "./models/ChemicalLog/ChemicalLog.js";
+import Service from "./models/Service/Service.js";
 
 mongoose.connect(process.env.DB_STRING);
 const db = mongoose.connection;
@@ -70,6 +71,7 @@ app.use(
           Customer,
           PoolReport,
           ChemicalLog,
+          Service,
         },
         user: getUserFromToken({ req }),
       };
