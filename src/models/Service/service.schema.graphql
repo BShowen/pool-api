@@ -9,9 +9,16 @@ input ServiceInput {
   description: String
 }
 
+input ServiceUpdateInput {
+  id: ID!
+  name: String!
+  description: String
+}
+
 type Mutation {
   createNewService(input: ServiceInput): Service
   deleteService(serviceId: ID!): Service!
+  updateService(input: ServiceUpdateInput!): Service!
 }
 
 type Query {
