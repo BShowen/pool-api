@@ -5,7 +5,22 @@ import { validateMongooseId } from "../../utils/validateMongooseId.js";
 import mongoose, { Mongoose } from "mongoose";
 
 export default {
-  Query: {},
+  Query: {
+    getPoolReportList: async (_, __, { user, models }) => {
+      // Verify the user is logged in and authorized to make pool reports.
+      user.authenticateAndAuthorize({ role: "MANAGER" });
+
+      const { PoolReport } = models;
+      try {
+        return await PoolReport.find({
+          companyId: new mongoose.Types.ObjectId(user.c_id),
+        });
+      } catch (error) {
+        console.log(error);
+        return new GraphQLError(error.message);
+      }
+    },
+  },
   Mutation: {
     createPoolReport: async (_, { input }, { user, models }) => {
       // Verify the user is logged in and authorized to make pool reports.

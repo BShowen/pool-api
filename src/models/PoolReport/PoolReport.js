@@ -22,11 +22,12 @@ const poolReportSchema = new Schema({
     required: [true, "A chemical log is required on a pool report."],
   },
   workLog: {
-    brushPool: Boolean,
-    emptySkimmerBasket: Boolean,
-    emptyPumpBasket: Boolean,
-    cleanFilter: Boolean,
-    cleanTile: Boolean,
+    workLogItems: [
+      {
+        name: String,
+        description: String,
+      },
+    ],
   },
   notes: {
     type: String,
@@ -37,6 +38,15 @@ const poolReportSchema = new Schema({
 poolReportSchema.post("save", async function (doc, next) {
   // After a PoolReport is saved, populate it's chemicalLog field.
   await doc.populate("chemicalLog");
+  next();
+});
+poolReportSchema.post("find", async function (docs, next) {
+  // For each pooReport found, populate it's "chemicalLog" field.
+  if (docs.length > 0) {
+    for (const doc of docs) {
+      await doc.populate("chemicalLog");
+    }
+  }
   next();
 });
 

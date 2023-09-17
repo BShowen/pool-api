@@ -8,29 +8,36 @@ type PoolReport {
 }
 
 type WorkLog {
-  brushPool: Boolean
-  emptySkimmerBasket: Boolean
-  emptyPumpBasket: Boolean
-  cleanFilter: Boolean
-  cleanTile: Boolean
+  workLogItems: [WorkLogItem]!
+}
+
+type WorkLogItem {
+  name: String
+  description: String
 }
 
 input PoolReportInput {
   customerAccountId: ID!
   chemicalLog: ID! #The ID that references an already saved chemical log
-  workLog: WorkLogInput!
+  workLog: WorkLogInput
   notes: String
 }
 
 input WorkLogInput {
-  brushPool: Boolean!
-  emptySkimmerBasket: Boolean!
-  emptyPumpBasket: Boolean!
-  cleanFilter: Boolean!
-  cleanTile: Boolean!
+  workLogItems: [WorkLogItemInput]
+}
+
+input WorkLogItemInput {
+  name: String!
+  description: String
 }
 
 type Mutation {
   "Create and return a new pool report."
   createPoolReport(input: PoolReportInput!): PoolReport!
+}
+
+type Query {
+  "Get a list of pool reports."
+  getPoolReportList: [PoolReport]!
 }
