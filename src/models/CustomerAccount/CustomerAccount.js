@@ -96,6 +96,18 @@ customerAccountSchema.virtual("chemicalLogs", {
   }, // Sort by date in descending order
 });
 
+customerAccountSchema.virtual("latestPoolReport", {
+  ref: "PoolReport", // Reference to the PoolReport model
+  localField: "_id", // Field in the PoolReport model
+  foreignField: "customerAccountId", // Field in the PoolReport model
+  options: {
+    sort: {
+      date: -1,
+    },
+  }, // Sort by date in descending order
+  justOne: true, // Return only one document
+});
+
 /**
  * All static methods on this model will attempt to perform their respective
  * process. Errors are not handled or even detected. If the static method fails,
@@ -261,6 +273,7 @@ customerAccountSchema.post("findOne", async function (doc, next) {
     await doc.populate("technician");
     await doc.populate("chemicalLogs");
     await doc.populate("latestChemicalLog");
+    await doc.populate("latestPoolReport");
   }
   next();
 });
@@ -271,6 +284,7 @@ customerAccountSchema.post("find", async function (docs, next) {
       await doc.populate("technician");
       await doc.populate("chemicalLogs");
       await doc.populate("latestChemicalLog");
+      await doc.populate("latestPoolReport");
     }
   }
   next();
