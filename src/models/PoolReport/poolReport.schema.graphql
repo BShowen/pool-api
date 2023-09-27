@@ -5,6 +5,7 @@ type PoolReport {
   chemicalLog: ChemicalLog
   workLog: WorkLog
   notes: String
+  id: ID
 }
 
 type WorkLog {
@@ -40,4 +41,6 @@ type Mutation {
 type Query {
   "Get a list of pool reports."
   getPoolReportList: [PoolReport]!
+  "Get a list of pool reports for a customer."
+  getPoolReportsByCustomer(customerAccountId: ID!): [PoolReport]!
 }

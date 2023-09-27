@@ -20,6 +20,20 @@ export default {
         return new GraphQLError(error.message);
       }
     },
+    getPoolReportsByCustomer: async (_, args, { user, models }) => {
+      // Verify the user is logged in and authorized to make pool reports.
+      user.authenticateAndAuthorize({ role: "TECH" });
+
+      const { customerAccountId } = args;
+      // Validate the customerAccountId.
+      validateMongooseId(customerAccountId);
+
+      const { PoolReport } = models;
+      return await PoolReport.find({
+        customerAccountId: new mongoose.Types.ObjectId(customerAccountId),
+        companyId: new mongoose.Types.ObjectId(user.c_id),
+      }).sort({ date: -1 });
+    },
   },
   Mutation: {
     createPoolReport: async (_, { input }, { user, models }) => {
