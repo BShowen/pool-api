@@ -1,4 +1,5 @@
 import { GraphQLScalarType, Kind } from "graphql";
+import GraphQLUpload from "graphql-upload/GraphQLUpload.mjs";
 
 export default {
   Date: new GraphQLScalarType({
@@ -25,4 +26,5 @@ export default {
       return null;
     },
   }),
+  Upload: GraphQLUpload,
 };

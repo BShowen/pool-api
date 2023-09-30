@@ -1,8 +1,11 @@
 // npm modules
 import { GraphQLError } from "graphql";
+import { fileTypeFromFile } from "file-type";
 
 import { validateMongooseId } from "../../utils/validateMongooseId.js";
-import mongoose, { Mongoose } from "mongoose";
+import mongoose from "mongoose";
+import { serverStorage } from "../../utils/serverStorage.js";
+import { s3storage } from "../../utils/s3storage.js";
 
 export default {
   Query: {
@@ -29,10 +32,27 @@ export default {
       validateMongooseId(customerAccountId);
 
       const { PoolReport } = models;
-      return await PoolReport.find({
+      const poolReportList = await PoolReport.find({
         customerAccountId: new mongoose.Types.ObjectId(customerAccountId),
         companyId: new mongoose.Types.ObjectId(user.c_id),
       }).sort({ date: -1 });
+
+      const s3 = s3storage();
+      for (const poolReport of poolReportList) {
+        const { photo } = poolReport;
+        if (photo) {
+          const presignedUrl = await s3.getObject({ key: photo });
+          if (presignedUrl) {
+            poolReport.photo = presignedUrl;
+          } else {
+            // Update the document and to remove the awsKey as it is stale.
+            poolReport.photo = null;
+            await poolReport.save();
+          }
+        }
+      }
+
+      return poolReportList;
     },
   },
   Mutation: {
@@ -89,7 +109,31 @@ export default {
         }
 
         // Instantiate the pool report.
-        const poolReport = new PoolReport(input);
+        const poolReport = new PoolReport({ ...input, photo: null });
+
+        if (input.photo) {
+          try {
+            const storage = serverStorage(input.photo);
+            const s3 = s3storage();
+            const { storedFileUrl } = await storage.storePhoto();
+            const { mime } = await fileTypeFromFile(storedFileUrl);
+            if (mime.startsWith("image/")) {
+              // upload to s3.
+              const { Key } = await s3.putObject({
+                filePathUrl: storedFileUrl,
+                mime: mime,
+              });
+              // attach the aws key to the pool report.
+              poolReport.photo = Key;
+            }
+            // Always delete upload dir to reduce server load.
+            // Do not await upload.deleteUploadDir in oder to optimize client
+            // response time.
+            storage.deleteUploadDir();
+          } catch (error) {
+            console.log({ error });
+          }
+        }
         // Set the DateTime on the pool report.
         // Note: The DateTime is being saved as the server's DateTime. This may
         // present an issue if the timezone of the server and user are different.

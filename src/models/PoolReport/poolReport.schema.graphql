@@ -6,6 +6,7 @@ type PoolReport {
   workLog: WorkLog
   notes: String
   id: ID
+  photo: String
 }
 
 type WorkLog {
@@ -22,6 +23,7 @@ input PoolReportInput {
   chemicalLog: ID! #The ID that references an already saved chemical log
   workLog: WorkLogInput
   notes: String
+  photo: Upload
 }
 
 input WorkLogInput {

@@ -33,6 +33,9 @@ const poolReportSchema = new Schema({
     type: String,
     trim: true,
   },
+  // Consider storing the aws keys in this array, then create a virtual which
+  // generates presigned urls for the images in this array
+  photo: { type: String },
 });
 
 poolReportSchema.post("save", async function (doc, next) {
