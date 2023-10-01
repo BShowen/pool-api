@@ -52,5 +52,12 @@ poolReportSchema.post("find", async function (docs, next) {
   }
   next();
 });
+poolReportSchema.post("findOne", async function (doc, next) {
+  // If there is a pool report (doc) populate it's "chemicalLog" field.
+  if (doc) {
+    await doc.populate("chemicalLog");
+  }
+  next();
+});
 
 export default mongoose.model("PoolReport", poolReportSchema);

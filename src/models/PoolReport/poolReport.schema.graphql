@@ -45,4 +45,6 @@ type Query {
   getPoolReportList: [PoolReport]!
   "Get a list of pool reports for a customer."
   getPoolReportsByCustomer(customerAccountId: ID!): [PoolReport]!
+  "Get a pool report by id."
+  getPoolReport(poolReportId: ID!, customerAccountId: ID!): PoolReport!
 }

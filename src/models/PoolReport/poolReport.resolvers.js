@@ -54,6 +54,25 @@ export default {
 
       return poolReportList;
     },
+    getPoolReport: async (_, args, { user, models }) => {
+      // Verify the user is logged in and authorized to make pool reports.
+      user.authenticateAndAuthorize({ role: "TECH" });
+
+      const { poolReportId, customerAccountId } = args;
+      // Validate the customerAccountId.
+      validateMongooseId(customerAccountId);
+
+      try {
+        const { PoolReport } = models;
+        return await PoolReport.findOne({
+          customerAccountId: new mongoose.Types.ObjectId(customerAccountId),
+          _id: new mongoose.Types.ObjectId(poolReportId),
+          companyId: new mongoose.Types.ObjectId(user.c_id),
+        });
+      } catch (error) {
+        console.log({ error });
+      }
+    },
   },
   Mutation: {
     createPoolReport: async (_, { input }, { user, models }) => {
