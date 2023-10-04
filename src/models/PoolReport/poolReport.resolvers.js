@@ -64,13 +64,27 @@ export default {
 
       try {
         const { PoolReport } = models;
-        return await PoolReport.findOne({
+        const poolReport = await PoolReport.findOne({
           customerAccountId: new mongoose.Types.ObjectId(customerAccountId),
           _id: new mongoose.Types.ObjectId(poolReportId),
           companyId: new mongoose.Types.ObjectId(user.c_id),
         });
+        const s3 = s3storage();
+        const { photo } = poolReport;
+        if (photo) {
+          const presignedUrl = await s3.getObject({ key: photo });
+          if (presignedUrl) {
+            poolReport.photo = presignedUrl;
+          } else {
+            // Update the document and to remove the awsKey as it is stale.
+            poolReport.photo = null;
+            await poolReport.save();
+          }
+        }
+        return poolReport;
       } catch (error) {
         console.log({ error });
+        throw error;
       }
     },
   },
