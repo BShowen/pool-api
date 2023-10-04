@@ -145,6 +145,7 @@ export default {
         const poolReport = new PoolReport({ ...input, photo: null });
 
         if (input.photo) {
+          // Upload the photo to AWS-S3 and store the AWS Object key as the photo value
           try {
             const storage = serverStorage(input.photo);
             const s3 = s3storage();

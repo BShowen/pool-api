@@ -29,7 +29,11 @@ const poolReportSchema = new Schema({
       },
     ],
   },
-  notes: {
+  customerNotes: {
+    type: String,
+    trim: true,
+  },
+  technicianNotes: {
     type: String,
     trim: true,
   },

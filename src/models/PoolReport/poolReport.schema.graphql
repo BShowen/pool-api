@@ -4,7 +4,8 @@ type PoolReport {
   date: Date
   chemicalLog: ChemicalLog
   workLog: WorkLog
-  notes: String
+  customerNotes: String
+  technicianNotes: String
   id: ID
   photo: String
 }
@@ -22,7 +23,8 @@ input PoolReportInput {
   customerAccountId: ID!
   chemicalLog: ID! #The ID that references an already saved chemical log
   workLog: WorkLogInput
-  notes: String
+  customerNotes: String
+  technicianNotes: String
   photo: Upload
 }
 
