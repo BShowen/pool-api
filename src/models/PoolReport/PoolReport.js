@@ -40,6 +40,11 @@ const poolReportSchema = new Schema({
   // Consider storing the aws keys in this array, then create a virtual which
   // generates presigned urls for the images in this array
   photo: { type: String },
+  technician: {
+    type: mongoose.Types.ObjectId,
+    ref: "Technician",
+    required: [true, "A pool report technician is required."],
+  },
 });
 
 poolReportSchema.post("save", async function (doc, next) {
@@ -52,6 +57,7 @@ poolReportSchema.post("find", async function (docs, next) {
   if (docs.length > 0) {
     for (const doc of docs) {
       await doc.populate("chemicalLog");
+      await doc.populate("technician");
     }
   }
   next();
@@ -60,6 +66,7 @@ poolReportSchema.post("findOne", async function (doc, next) {
   // If there is a pool report (doc) populate it's "chemicalLog" field.
   if (doc) {
     await doc.populate("chemicalLog");
+    await doc.populate("technician");
   }
   next();
 });

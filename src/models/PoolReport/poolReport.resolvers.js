@@ -174,6 +174,8 @@ export default {
         poolReport.set({ date: new Date().getTime() });
         // Set the companyId on the pool report.
         poolReport.set({ companyId: user.c_id });
+        // Set the technician on the pool report
+        poolReport.set({ technician: new mongoose.Types.ObjectId(user.u_id) });
         // Save and the pool report.
         return await poolReport.save();
       } catch (error) {

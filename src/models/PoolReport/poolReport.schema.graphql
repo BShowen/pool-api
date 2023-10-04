@@ -8,6 +8,7 @@ type PoolReport {
   technicianNotes: String
   id: ID
   photo: String
+  technician: Technician
 }
 
 type WorkLog {
