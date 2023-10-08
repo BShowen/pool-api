@@ -5,6 +5,7 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
@@ -12,13 +13,6 @@ import { createReadStream } from "fs";
 import { fileTypeFromFile } from "file-type";
 
 const s3Client = new S3({ region: process.env.REGION });
-
-export const s3storage = () => {
-  return {
-    getObject,
-    putObject,
-  };
-};
 
 const getObject = async ({ key }) => {
   // Get the image url for the provided "key"
@@ -30,7 +24,7 @@ const getObject = async ({ key }) => {
   };
 
   if (!(await objectExists({ key }))) {
-    return false;
+    return "";
   }
 
   const getObjectCommand = new GetObjectCommand(input);
@@ -54,7 +48,18 @@ const putObject = async ({ filePathUrl, mime }) => {
   return { ...(await s3Client.send(putObjectCommand)), Key: params.Key };
 };
 
+const deleteObject = async ({ key }) => {
+  const input = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: key,
+  };
+
+  const deleteCommand = new DeleteObjectCommand(input);
+  return await s3Client.send(deleteCommand);
+};
+
 const objectExists = async ({ key }) => {
+  if (!key) return false;
   try {
     const input = {
       Bucket: process.env.AWS_BUCKET_NAME,
@@ -67,15 +72,17 @@ const objectExists = async ({ key }) => {
     if (error.name === "NotFound") {
       return false;
     } else {
-      console.log("Error getting object", error);
+      console.log(error);
       return false;
     }
   }
 };
 
-class AWS_Error extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "AWS_Error";
-  }
-}
+export const s3storage = (() => {
+  return {
+    validateAwsKey: objectExists,
+    getObject,
+    putObject,
+    deleteObject,
+  };
+})();

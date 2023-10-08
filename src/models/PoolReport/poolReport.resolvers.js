@@ -5,12 +5,11 @@ import { fileTypeFromFile } from "file-type";
 import { validateMongooseId } from "../../utils/validateMongooseId.js";
 import mongoose from "mongoose";
 import { serverStorage } from "../../utils/serverStorage.js";
-import { s3storage } from "../../utils/s3storage.js";
 
 export default {
   Query: {
-    getPoolReportList: async (_, __, { user, models }) => {
-      // Verify the user is logged in and authorized to make pool reports.
+    getPoolReportList: async (_, __, { user, models, s3 }) => {
+      // Verify the user is logged in and authorized to query pool reports.
       user.authenticateAndAuthorize({ role: "MANAGER" });
 
       const { PoolReport } = models;
@@ -23,7 +22,7 @@ export default {
         return new GraphQLError(error.message);
       }
     },
-    getPoolReportsByCustomer: async (_, args, { user, models }) => {
+    getPoolReportsByCustomer: async (_, args, { user, models, s3 }) => {
       // Verify the user is logged in and authorized to make pool reports.
       user.authenticateAndAuthorize({ role: "TECH" });
 
@@ -37,24 +36,9 @@ export default {
         companyId: new mongoose.Types.ObjectId(user.c_id),
       }).sort({ date: -1 });
 
-      const s3 = s3storage();
-      for (const poolReport of poolReportList) {
-        const { photo } = poolReport;
-        if (photo) {
-          const presignedUrl = await s3.getObject({ key: photo });
-          if (presignedUrl) {
-            poolReport.photo = presignedUrl;
-          } else {
-            // Update the document and to remove the awsKey as it is stale.
-            poolReport.photo = null;
-            await poolReport.save();
-          }
-        }
-      }
-
       return poolReportList;
     },
-    getPoolReport: async (_, args, { user, models }) => {
+    getPoolReport: async (_, args, { user, models, s3 }) => {
       // Verify the user is logged in and authorized to make pool reports.
       user.authenticateAndAuthorize({ role: "TECH" });
 
@@ -69,18 +53,6 @@ export default {
           _id: new mongoose.Types.ObjectId(poolReportId),
           companyId: new mongoose.Types.ObjectId(user.c_id),
         });
-        const s3 = s3storage();
-        const { photo } = poolReport;
-        if (photo) {
-          const presignedUrl = await s3.getObject({ key: photo });
-          if (presignedUrl) {
-            poolReport.photo = presignedUrl;
-          } else {
-            // Update the document and to remove the awsKey as it is stale.
-            poolReport.photo = null;
-            await poolReport.save();
-          }
-        }
         return poolReport;
       } catch (error) {
         console.log({ error });
@@ -180,6 +152,50 @@ export default {
         return await poolReport.save();
       } catch (error) {
         throw new GraphQLError(error.message);
+      }
+    },
+  },
+  PoolReport: {
+    img: async (parent, _, { s3 }, info) => {
+      // If the poolReport doesn't have a photo, then no need to continue.
+      // Return the awsKey and the src
+      if (!parent.photo) return { awsKey: "", src: "" };
+
+      // Get the fields that the client requested in the query.
+      // fieldSelection can be both ["awsKey", "src"] or one or the other.
+      const fieldSelection = info.fieldNodes[0].selectionSet.selections.map(
+        (selection) => selection.name.value
+      );
+
+      if (fieldSelection.includes("src")) {
+        // If the field selection includes "src" then obtain the presigned url.
+        try {
+          const presignedUrl = await s3.getObject({ key: parent.photo });
+          if (presignedUrl) {
+            return { awsKey: parent.photo, src: presignedUrl };
+          } else {
+            parent.set({ photo: null });
+            await parent.save();
+            return { awsKey: "", src: "" };
+          }
+        } catch (error) {
+          return "";
+        }
+      } else {
+        // If the src is not requested, then validate and return the awsKey. No
+        // need to obtain a presigned url from AWS.
+        try {
+          if (await s3.validateAwsKey({ key: parent.photo })) {
+            return { awsKey: parent.photo };
+          } else {
+            // That key doesn't exist in the s3 bucket. Remove the key from the doc.
+            parent.set({ photo: null });
+            await parent.save();
+            return "";
+          }
+        } catch (error) {
+          return "";
+        }
       }
     },
   },

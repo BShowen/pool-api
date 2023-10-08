@@ -7,8 +7,13 @@ type PoolReport {
   customerNotes: String
   technicianNotes: String
   id: ID
-  photo: String
   technician: Technician
+  img: Image
+}
+
+type Image {
+  awsKey: String
+  src: String
 }
 
 type WorkLog {

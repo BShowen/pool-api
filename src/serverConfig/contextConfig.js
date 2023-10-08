@@ -8,6 +8,7 @@ import Customer from "../models/Customer/Customer.js";
 import PoolReport from "../models/PoolReport/PoolReport.js";
 import ChemicalLog from "../models/ChemicalLog/ChemicalLog.js";
 import Service from "../models/Service/Service.js";
+import { s3storage } from "../utils/s3storage.js";
 export const contextConfig = async ({ req }) => {
   return {
     models: {
@@ -20,6 +21,7 @@ export const contextConfig = async ({ req }) => {
       ChemicalLog,
       Service,
     },
+    s3: s3storage,
     user: getUserFromToken({ req }),
   };
 };

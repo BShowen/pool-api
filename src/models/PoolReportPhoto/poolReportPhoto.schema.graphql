@@ -1,0 +1,15 @@
+input PresignedUrlInput {
+  awsKey: String!
+  poolReportId: ID!
+  customerAccountId: ID!
+}
+
+type Query {
+  "Get the presigned url for a pool report photo"
+  getPoolReportPhotoUrl(input: PresignedUrlInput!): String!
+}
+
+type Mutation {
+  "Remove a photo from AWS S3"
+  removePhotoFromAWS(input: PresignedUrlInput!): Boolean!
+}
