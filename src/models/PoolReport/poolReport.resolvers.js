@@ -154,6 +154,39 @@ export default {
         throw new GraphQLError(error.message);
       }
     },
+    deletePoolReport: async (_, { poolReportId }, { user, models, s3 }) => {
+      // Verify the user is logged in and authorized to make pool reports.
+      user.authenticateAndAuthorize({ role: "MANAGER" });
+      // Validate the customerAccountId.
+      validateMongooseId([poolReportId]);
+      const { PoolReport, ChemicalLog } = models;
+      const companyId = new mongoose.Types.ObjectId(user.c_id);
+      try {
+        // Get the pool report.
+        const poolReport = await PoolReport.findOne({
+          _id: poolReportId,
+          companyId,
+        });
+        if (!poolReport) {
+          throw new GraphQLError("Cannot find that pool report.");
+        }
+        // Delete the chemicalLog
+        await ChemicalLog.delete({
+          id: poolReport.chemicalLog.id,
+        });
+        // Delete pool report and store deleted report for further processing
+        const report = await PoolReport.delete({ companyId, poolReportId });
+        // Delete the pool report photo from s3.
+        if (report?.photo) {
+          await s3.deleteObject({ key: poolReport.photo });
+        }
+        // If this is reached, the deletion was successful.
+        return true;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
+    },
   },
   PoolReport: {
     img: async (parent, _, { s3 }, info) => {

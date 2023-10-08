@@ -80,4 +80,9 @@ chemicalLogSchema.statics.exists = async function ({ query }) {
   return (await this.countDocuments(query)) > 0;
 };
 
+chemicalLogSchema.statics.delete = async function ({ id }) {
+  return this.findOneAndRemove({ _id: id });
+  // return this.findOne({ _id: id });
+};
+
 export default mongoose.model("ChemicalLog", chemicalLogSchema);

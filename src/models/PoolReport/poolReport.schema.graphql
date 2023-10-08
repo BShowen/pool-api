@@ -46,6 +46,8 @@ input WorkLogItemInput {
 type Mutation {
   "Create and return a new pool report."
   createPoolReport(input: PoolReportInput!): PoolReport!
+  "Delete a pool report."
+  deletePoolReport(poolReportId: ID!): Boolean!
 }
 
 type Query {

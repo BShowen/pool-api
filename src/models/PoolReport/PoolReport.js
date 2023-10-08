@@ -71,4 +71,14 @@ poolReportSchema.post("findOne", async function (doc, next) {
   next();
 });
 
+poolReportSchema.statics.delete = async function ({ poolReportId, companyId }) {
+  // Delete and return the pool report
+  const poolReport = await this.findOneAndRemove({
+    // const poolReport = await this.findOne({
+    _id: poolReportId,
+    companyId,
+  });
+  return poolReport;
+};
+
 export default mongoose.model("PoolReport", poolReportSchema);
