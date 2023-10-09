@@ -61,7 +61,7 @@ export default {
     },
   },
   Mutation: {
-    createPoolReport: async (_, { input }, { user, models }) => {
+    createPoolReport: async (_, { input }, { user, models, s3 }) => {
       // Verify the user is logged in and authorized to make pool reports.
       user.authenticateAndAuthorize({ role: "TECH" });
 
@@ -120,7 +120,6 @@ export default {
           // Upload the photo to AWS-S3 and store the AWS Object key as the photo value
           try {
             const storage = serverStorage(input.photo);
-            const s3 = s3storage();
             const { storedFileUrl } = await storage.storePhoto();
             const { mime } = await fileTypeFromFile(storedFileUrl);
             if (mime.startsWith("image/")) {
@@ -137,7 +136,7 @@ export default {
             // response time.
             storage.deleteUploadDir();
           } catch (error) {
-            console.log({ error });
+            console.log(error);
           }
         }
         // Set the DateTime on the pool report.
