@@ -10,7 +10,6 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
 import { createReadStream } from "fs";
-import { fileTypeFromFile } from "file-type";
 
 const s3Client = new S3({ region: process.env.REGION });
 
@@ -35,6 +34,20 @@ const getObject = async ({ key }) => {
   return presignedUrl;
 };
 
+const putObjects = async ({ fileList = [] }) => {
+  const amazonResponse = await Promise.allSettled(
+    fileList.map(
+      async (file) =>
+        await putObject({ filePathUrl: file.fileUrl, mime: file.mime })
+    )
+  );
+  return amazonResponse
+    .filter((file) => file.status === "fulfilled")
+    .map((file) => {
+      return file.value;
+    });
+};
+
 const putObject = async ({ filePathUrl, mime }) => {
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
@@ -45,7 +58,9 @@ const putObject = async ({ filePathUrl, mime }) => {
   };
 
   const putObjectCommand = new PutObjectCommand(params);
-  return { ...(await s3Client.send(putObjectCommand)), Key: params.Key };
+
+  await s3Client.send(putObjectCommand);
+  return params.Key;
 };
 
 const deleteObject = async ({ key }) => {
@@ -82,7 +97,7 @@ export const s3storage = (() => {
   return {
     validateAwsKey: objectExists,
     getObject,
-    putObject,
+    putObjects,
     deleteObject,
   };
 })();

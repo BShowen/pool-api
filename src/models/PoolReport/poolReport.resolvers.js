@@ -1,9 +1,9 @@
 // npm modules
 import { GraphQLError } from "graphql";
-import { fileTypeFromFile } from "file-type";
+import { fileTypeStream } from "file-type";
+import mongoose from "mongoose";
 
 import { validateMongooseId } from "../../utils/validateMongooseId.js";
-import mongoose from "mongoose";
 import { serverStorage } from "../../utils/serverStorage.js";
 
 export default {
@@ -116,32 +116,27 @@ export default {
         // Instantiate the pool report.
         const poolReport = new PoolReport({ ...input, photo: null });
 
-        if (input.photo) {
-          // Upload the photo to AWS-S3 and store the AWS Object key as the photo value
-          try {
-            const storage = serverStorage(input.photo);
-            const { storedFileUrl } = await storage.storePhoto();
-            const { mime } = await fileTypeFromFile(storedFileUrl);
-            if (mime.startsWith("image/")) {
-              // upload to s3.
-              const { Key } = await s3.putObject({
-                filePathUrl: storedFileUrl,
-                mime: mime,
-              });
-              // attach the aws key to the pool report.
-              poolReport.photo = Key;
-            }
-            // Always delete upload dir to reduce server load.
-            // Do not await upload.deleteUploadDir in oder to optimize client
-            // response time.
-            storage.deleteUploadDir();
-          } catch (error) {
-            console.log(error);
-          }
+        if (input?.images?.length > 0) {
+          // Make sure the files have a mimeType that start with "image/".
+          const validFiles = await serverStorage.validateFiles({
+            files: input.images,
+            mimeType: "image/", //The mimeType that is allowed.
+          });
+          // storedFiles is a list of files stored locally in the uploads dir.
+          const storedFiles = await serverStorage.storeImagesLocally({
+            files: validFiles,
+          });
+          // Upload the files to s3.
+          const awsKeys = await s3.putObjects({ fileList: storedFiles });
+          serverStorage.deleteUploadDir();
+          // Store the awsKeys in the poolReport model
+          poolReport.awsImageKeys = awsKeys;
+          await poolReport.save();
         }
         // Set the DateTime on the pool report.
         // Note: The DateTime is being saved as the server's DateTime. This may
         // present an issue if the timezone of the server and user are different.
+        // This can be resolved by setting the DateTime on the client.
         poolReport.set({ date: new Date().getTime() });
         // Set the companyId on the pool report.
         poolReport.set({ companyId: user.c_id });
@@ -188,7 +183,7 @@ export default {
     },
   },
   PoolReport: {
-    img: async (parent, _, { s3 }, info) => {
+    images: async (parent, _, { s3 }, info) => {
       // If the poolReport doesn't have a photo, then no need to continue.
       // Return the awsKey and the src
       if (!parent.photo) return { awsKey: "", src: "" };

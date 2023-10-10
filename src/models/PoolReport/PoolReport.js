@@ -37,9 +37,7 @@ const poolReportSchema = new Schema({
     type: String,
     trim: true,
   },
-  // Consider storing the aws keys in this array, then create a virtual which
-  // generates presigned urls for the images in this array
-  photo: { type: String },
+  awsImageKeys: [String],
   technician: {
     type: mongoose.Types.ObjectId,
     ref: "Technician",
