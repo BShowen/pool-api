@@ -1,15 +1,25 @@
 input PresignedUrlInput {
-  awsKey: String!
+  awsKeyList: [String!]!
   poolReportId: ID!
-  customerAccountId: ID!
+}
+
+type DeleteImagesResponse {
+  "The number of keys that you requested to delete."
+  deleteCountRequested: Int!
+  "The number of keys that AWS successfully deleted."
+  deleteCountActual: Int!
+  "Array of keys that were successfully deleted."
+  keysDeleted: [String!]!
+  "Array of keys that were not deleted."
+  keysNotDeleted: [String!]!
 }
 
 type Query {
-  "Get the presigned url for a pool report photo"
-  getPoolReportPhotoUrl(input: PresignedUrlInput!): String!
+  "Get presigned url for provided aws keys"
+  getImages(awsKeyList: [String!]!, poolReportId: ID!): [Image!]!
 }
 
 type Mutation {
   "Remove a photo from AWS S3"
-  removePhotoFromAWS(input: PresignedUrlInput!): Boolean!
+  deleteSomeImages(input: PresignedUrlInput!): DeleteImagesResponse!
 }

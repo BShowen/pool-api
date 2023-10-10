@@ -6,6 +6,7 @@ import {
   HeadObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
@@ -13,7 +14,7 @@ import { createReadStream } from "fs";
 
 const s3Client = new S3({ region: process.env.REGION });
 
-const getObject = async ({ key }) => {
+const _getObject = async ({ key }) => {
   // Get the image url for the provided "key"
   const input = {
     Bucket: process.env.AWS_BUCKET_NAME,
@@ -22,23 +23,34 @@ const getObject = async ({ key }) => {
     // ResponseContentType:
   };
 
-  if (!(await objectExists({ key }))) {
-    return "";
+  if (!(await _objectExists({ key }))) {
+    return Promise.reject("Object doesn't exist");
   }
 
   const getObjectCommand = new GetObjectCommand(input);
   const presignedUrl = await getSignedUrl(s3Client, getObjectCommand, {
-    expiresIn: 60,
+    expiresIn: 86_400, // One day.
   });
 
-  return presignedUrl;
+  return { url: presignedUrl, key };
+};
+
+const getObjects = async ({ awsKeyList }) => {
+  const preSignedUrls = await Promise.allSettled(
+    awsKeyList.map(async (key) => {
+      return await _getObject({ key });
+    })
+  );
+  return preSignedUrls
+    .filter((response) => response.status === "fulfilled")
+    .map((response) => response.value);
 };
 
 const putObjects = async ({ fileList = [] }) => {
   const amazonResponse = await Promise.allSettled(
     fileList.map(
       async (file) =>
-        await putObject({ filePathUrl: file.fileUrl, mime: file.mime })
+        await _putObject({ filePathUrl: file.fileUrl, mime: file.mime })
     )
   );
   return amazonResponse
@@ -48,7 +60,7 @@ const putObjects = async ({ fileList = [] }) => {
     });
 };
 
-const putObject = async ({ filePathUrl, mime }) => {
+const _putObject = async ({ filePathUrl, mime }) => {
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: crypto.randomBytes(32).toString("hex"),
@@ -63,17 +75,31 @@ const putObject = async ({ filePathUrl, mime }) => {
   return params.Key;
 };
 
-const deleteObject = async ({ key }) => {
-  const input = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: key,
-  };
-
-  const deleteCommand = new DeleteObjectCommand(input);
-  return await s3Client.send(deleteCommand);
+const deleteObjects = async ({ awsKeyList }) => {
+  try {
+    if (!awsKeyList || awsKeyList.length == 0) {
+      throw new Error(
+        "s3storage.js -> deleteObjects aborted because no args given."
+      );
+    }
+    const input = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Delete: {
+        Objects: awsKeyList.map((key) => {
+          return { Key: key };
+        }),
+        Quiet: false,
+      },
+    };
+    const command = new DeleteObjectsCommand(input);
+    return await s3Client.send(command);
+  } catch (error) {
+    console.log(error);
+    return {};
+  }
 };
 
-const objectExists = async ({ key }) => {
+const _objectExists = async ({ key }) => {
   if (!key) return false;
   try {
     const input = {
@@ -95,9 +121,8 @@ const objectExists = async ({ key }) => {
 
 export const s3storage = (() => {
   return {
-    validateAwsKey: objectExists,
-    getObject,
+    getObjects,
     putObjects,
-    deleteObject,
+    deleteObjects,
   };
 })();

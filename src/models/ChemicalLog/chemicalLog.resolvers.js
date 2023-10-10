@@ -85,7 +85,10 @@ export default {
           );
         }
         // Instantiate the chemical log.
-        const chemicalLog = new ChemicalLog(input);
+        const chemicalLog = new ChemicalLog({
+          ...input,
+          technician: user.c_id,
+        });
         // Set the DateTime on the chemical log.
         // Note: The DateTime is being saved as the server's DateTime. This may
         // present an issue if the timezone of the server and user are different.

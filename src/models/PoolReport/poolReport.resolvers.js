@@ -8,7 +8,7 @@ import { serverStorage } from "../../utils/serverStorage.js";
 
 export default {
   Query: {
-    getPoolReportList: async (_, __, { user, models, s3 }) => {
+    getPoolReportList: async (_, __, { user, models }) => {
       // Verify the user is logged in and authorized to query pool reports.
       user.authenticateAndAuthorize({ role: "MANAGER" });
 
@@ -22,7 +22,7 @@ export default {
         return new GraphQLError(error.message);
       }
     },
-    getPoolReportsByCustomer: async (_, args, { user, models, s3 }) => {
+    getPoolReportsByCustomer: async (_, args, { user, models }) => {
       // Verify the user is logged in and authorized to make pool reports.
       user.authenticateAndAuthorize({ role: "TECH" });
 
@@ -97,24 +97,29 @@ export default {
           );
         }
 
-        // Verify that the ChemicalLog belongs to the CustomerAccount
-        const chemicalLogBelongsToCustomerAccount = await ChemicalLog.exists({
-          query: {
-            companyId: new mongoose.Types.ObjectId(user.c_id),
+        // Instantiate the pool report.
+        // Note: The DateTime is being saved as the server's DateTime. This may
+        // present an issue if the timezone of the server and user are different.
+        // This can be resolved by setting the DateTime on the client.
+        const poolReport = new PoolReport({
+          ...input,
+          date: new Date().getTime(),
+          companyId: user.c_id,
+          technician: user.u_id,
+        });
+        await poolReport.save();
+
+        // Get the chemicalLog that belongs to this report.
+        await ChemicalLog.findOneAndUpdate(
+          {
             _id: new mongoose.Types.ObjectId(input.chemicalLog), //Chemical log id
+            companyId: new mongoose.Types.ObjectId(user.c_id),
             customerAccountId: new mongoose.Types.ObjectId(
               input.customerAccountId
             ),
           },
-        });
-        if (!chemicalLogBelongsToCustomerAccount) {
-          throw new Error(
-            `Chemical log with id ${input.chemicalLog} does not belong to customer with id ${input.customerAccountId}.`
-          );
-        }
-
-        // Instantiate the pool report.
-        const poolReport = new PoolReport({ ...input, photo: null });
+          { $set: { poolReportId: poolReport.id } }
+        );
 
         if (input?.images?.length > 0) {
           // Make sure the files have a mimeType that start with "image/".
@@ -133,18 +138,10 @@ export default {
           poolReport.awsImageKeys = awsKeys;
           await poolReport.save();
         }
-        // Set the DateTime on the pool report.
-        // Note: The DateTime is being saved as the server's DateTime. This may
-        // present an issue if the timezone of the server and user are different.
-        // This can be resolved by setting the DateTime on the client.
-        poolReport.set({ date: new Date().getTime() });
-        // Set the companyId on the pool report.
-        poolReport.set({ companyId: user.c_id });
-        // Set the technician on the pool report
-        poolReport.set({ technician: new mongoose.Types.ObjectId(user.u_id) });
-        // Save and the pool report.
-        return await poolReport.save();
+
+        return poolReport;
       } catch (error) {
+        console.log(error);
         throw new GraphQLError(error.message);
       }
     },
@@ -156,37 +153,54 @@ export default {
       const { PoolReport, ChemicalLog } = models;
       const companyId = new mongoose.Types.ObjectId(user.c_id);
       try {
-        // Get the pool report.
-        const poolReport = await PoolReport.findOne({
+        const poolReport =
+          (await PoolReport.findOne({
+            _id: poolReportId,
+            companyId: user.c_id,
+          })) ||
+          (() => {
+            throw new Error(
+              "Cannot delete pool report. Pool report not found."
+            );
+          })();
+
+        // Delete the images associated with the poolReport
+        if (poolReport.awsImageKeys && poolReport.awsImageKeys.length > 0) {
+          await s3.deleteObjects({ awsKeyList: poolReport.awsImageKeys });
+          // const { deleteCountRequested, deleteCountActual } =
+          //   await poolReport.deleteImages({
+          //     awsKeyList: poolReport.awsImageKeys,
+          //   });
+          // if (deleteCountRequested != deleteCountActual) {
+          //   throw new GraphQLError(
+          //     "Delete count requested does not equal delete count actual."
+          //   );
+          // }
+        }
+
+        // Delete the chemicalLog associated with the poolReport.
+        if (poolReport.chemicalLog) {
+          await ChemicalLog.findOneAndRemove({
+            _id: poolReport.chemicalLog.id,
+          });
+        }
+
+        // Delete the poolReport. This is reached once the images and
+        // chemicalLog have successfully been deleted.
+        return !!(await PoolReport.findOneAndRemove({
           _id: poolReportId,
-          companyId,
-        });
-        if (!poolReport) {
-          throw new GraphQLError("Cannot find that pool report.");
-        }
-        // Delete the chemicalLog
-        await ChemicalLog.delete({
-          id: poolReport.chemicalLog.id,
-        });
-        // Delete pool report and store deleted report for further processing
-        const report = await PoolReport.delete({ companyId, poolReportId });
-        // Delete the pool report photo from s3.
-        if (report?.photo) {
-          await s3.deleteObject({ key: poolReport.photo });
-        }
-        // If this is reached, the deletion was successful.
-        return true;
+          companyId: companyId,
+        }));
       } catch (error) {
-        console.log(error);
-        throw error;
+        console.error(error);
+        return false;
       }
     },
   },
   PoolReport: {
     images: async (parent, _, { s3 }, info) => {
-      // If the poolReport doesn't have a photo, then no need to continue.
-      // Return the awsKey and the src
-      if (!parent.photo) return { awsKey: "", src: "" };
+      // If the poolReport doesn't have images then no need to continue.
+      if (!parent.awsImageKeys) return [];
 
       // Get the fields that the client requested in the query.
       // fieldSelection can be both ["awsKey", "src"] or one or the other.
@@ -194,35 +208,20 @@ export default {
         (selection) => selection.name.value
       );
 
-      if (fieldSelection.includes("src")) {
+      if (fieldSelection.includes("url")) {
         // If the field selection includes "src" then obtain the presigned url.
         try {
-          const presignedUrl = await s3.getObject({ key: parent.photo });
-          if (presignedUrl) {
-            return { awsKey: parent.photo, src: presignedUrl };
-          } else {
-            parent.set({ photo: null });
-            await parent.save();
-            return { awsKey: "", src: "" };
-          }
+          return await s3.getObjects({
+            awsKeyList: parent.awsImageKeys,
+          });
         } catch (error) {
-          return "";
+          console.log(error);
+          return [];
         }
       } else {
-        // If the src is not requested, then validate and return the awsKey. No
-        // need to obtain a presigned url from AWS.
-        try {
-          if (await s3.validateAwsKey({ key: parent.photo })) {
-            return { awsKey: parent.photo };
-          } else {
-            // That key doesn't exist in the s3 bucket. Remove the key from the doc.
-            parent.set({ photo: null });
-            await parent.save();
-            return "";
-          }
-        } catch (error) {
-          return "";
-        }
+        // If the src is not requested then return the awsKey.
+        // No need to obtain a presigned url from AWS.
+        return parent.awsImageKeys.map((key) => ({ key }));
       }
     },
   },

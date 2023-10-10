@@ -8,6 +8,15 @@ const chemicalLogSchema = new Schema({
     ref: "CustomerAccount",
     required: [true, "Chemical log customer account is required."],
   },
+  poolReportId: {
+    type: mongoose.Types.ObjectId,
+    ref: "PoolReport",
+  },
+  technician: {
+    type: mongoose.Types.ObjectId,
+    ref: "Technician",
+    required: [true, "A technician is required to create a chemical log."],
+  },
   companyId: {
     type: mongoose.Types.ObjectId,
     ref: "Company",
@@ -80,9 +89,10 @@ chemicalLogSchema.statics.exists = async function ({ query }) {
   return (await this.countDocuments(query)) > 0;
 };
 
+// Delete a chemical log and return true/false
 chemicalLogSchema.statics.delete = async function ({ id }) {
-  return this.findOneAndRemove({ _id: id });
-  // return this.findOne({ _id: id });
+  if (!id) return false; //Return false if no id provided.
+  return !!(await this.findOneAndRemove({ _id: id }));
 };
 
 export default mongoose.model("ChemicalLog", chemicalLogSchema);

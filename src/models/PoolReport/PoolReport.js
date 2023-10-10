@@ -1,6 +1,9 @@
 // npm modules
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
+import { _intersection } from "../../utils/lodashCherries.js";
+
+import { s3storage } from "../../utils/s3storage.js";
 
 const poolReportSchema = new Schema({
   customerAccountId: {
@@ -11,7 +14,7 @@ const poolReportSchema = new Schema({
   companyId: {
     type: mongoose.Types.ObjectId,
     ref: "Company",
-    required: [true, "A company is required to create a chemical log."],
+    required: [true, "A company is required to create a pool report."],
   },
   date: {
     type: Date,
@@ -69,14 +72,18 @@ poolReportSchema.post("findOne", async function (doc, next) {
   next();
 });
 
-poolReportSchema.statics.delete = async function ({ poolReportId, companyId }) {
-  // Delete and return the pool report
-  const poolReport = await this.findOneAndRemove({
-    // const poolReport = await this.findOne({
-    _id: poolReportId,
-    companyId,
+// This method validates a list of AWS image keys, filtering out any keys that
+// don't exist in the current instance's awsKeyList property and returning the
+// keys that exist on the current instance's awsKeyList property.
+poolReportSchema.methods.validateAwsKeys = function ({ awsKeyList }) {
+  // Return the keys that are present in this.awsImageKeys AND awsKeyList
+  return _intersection(this.awsImageKeys, awsKeyList);
+};
+
+poolReportSchema.methods.getImages = async function ({ awsKeyList }) {
+  return await s3storage.getObjects({
+    awsKeyList: this.validateAwsKeys({ awsKeyList }),
   });
-  return poolReport;
 };
 
 export default mongoose.model("PoolReport", poolReportSchema);

@@ -7,8 +7,8 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import express from "express";
 import http from "http";
 import bodyParser from "body-parser";
-import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs";
 
+import { graphqlUploadConfig } from "./serverConfig/graphqlUpload.js";
 import { mongoConfig } from "./serverConfig/mongoConfig.js";
 import { contextConfig } from "./serverConfig/contextConfig.js";
 import { schemaConfig } from "./serverConfig/schemaConfig.js";
@@ -28,10 +28,7 @@ app.use(
   "/",
   corsConfig,
   bodyParser.json({ limit: "50mb" }),
-  graphqlUploadExpress({
-    maxFileSize: 10000000, // 10 MB (maxFileSize: bytes)
-    maxFiles: 2,
-  }), // Enable file uploads.
+  graphqlUploadConfig(), // Enable file uploads.
   expressMiddleware(server, {
     context: contextConfig,
   })

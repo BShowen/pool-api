@@ -12,8 +12,8 @@ type PoolReport {
 }
 
 type Image {
-  awsKey: String
-  src: String
+  key: String
+  url: String
 }
 
 type WorkLog {
